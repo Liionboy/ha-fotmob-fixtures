@@ -1,4 +1,11 @@
 {
     "name": "FotMob Fixtures",
-    "render_readme": true
+    "render_readme": true,
+    "country": [
+        "RO",
+        "GB",
+        "DE",
+        "ES",
+        "IT"
+    ]
 }
