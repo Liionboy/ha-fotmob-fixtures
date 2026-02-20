@@ -47,7 +47,7 @@ class FotMobBaseSensor(CoordinatorEntity, SensorEntity):
     @property
     def team_data(self):
         """Return the data for this team."""
-        return self.coordinator.data
+        return self.coordinator.data if self.coordinator.data is not None else {}
 
     @property
     def team_name(self):
