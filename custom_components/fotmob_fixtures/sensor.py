@@ -185,14 +185,31 @@ class FotMobTeamFormSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        table = self.team_data.get('overview', {}).get('table', [{}])[0].get('data', {}).get('table', {}).get('all', [])
-        for entry in table:
-            if str(entry.get('id')) == str(self._team_id):
-                form = entry.get('deductionReason') or entry.get('form', []) # FotMob often uses deductionReason if something is weird, but usually form is a list
-                if isinstance(form, list):
-                    return "-".join([f.get('result', '?') for f in form])
-                return form
-        return None
+        # Search all tables in overview
+        tables = self.team_data.get('overview', {}).get('table', [])
+        for table_container in tables:
+            rows = table_container.get('data', {}).get('table', {}).get('all', [])
+            for entry in rows:
+                if str(entry.get('id')) == str(self._team_id):
+                    form = entry.get('deductionReason') or entry.get('form', [])
+                    if isinstance(form, list):
+                        return "-".join([f.get('result', '?') for f in form])
+                    return form
+        return "N/A"
+
+    @property
+    def extra_state_attributes(self):
+        # Add detailed form attributes for debugging and better UI
+        tables = self.team_data.get('overview', {}).get('table', [])
+        for table_container in tables:
+            rows = table_container.get('data', {}).get('table', {}).get('all', [])
+            for entry in rows:
+                if str(entry.get('id')) == str(self._team_id):
+                    return {
+                        "form_list": entry.get('form', []),
+                        "deduction": entry.get('deductionReason')
+                    }
+        return {}
 
     @property
     def icon(self):
@@ -208,10 +225,12 @@ class FotMobMatchesPlayedSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        table = self.team_data.get('overview', {}).get('table', [{}])[0].get('data', {}).get('table', {}).get('all', [])
-        for entry in table:
-            if str(entry.get('id')) == str(self._team_id):
-                return entry.get('played')
+        tables = self.team_data.get('overview', {}).get('table', [])
+        for table_container in tables:
+            rows = table_container.get('data', {}).get('table', {}).get('all', [])
+            for entry in rows:
+                if str(entry.get('id')) == str(self._team_id):
+                    return entry.get('played')
         return None
 
     @property
@@ -334,27 +353,35 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        # State is the current team's position
-        overview = self.team_data.get('overview', {})
-        table_data = overview.get('table', [{}])
-        if not table_data:
-            return None
-            
-        rows = table_data[0].get('data', {}).get('table', {}).get('all', [])
-        for entry in rows:
-            if str(entry.get('id')) == str(self._team_id):
-                return entry.get('idx')
+        # Search all tables in overview
+        tables = self.team_data.get('overview', {}).get('table', [])
+        for table_container in tables:
+            rows = table_container.get('data', {}).get('table', {}).get('all', [])
+            for entry in rows:
+                if str(entry.get('id')) == str(self._team_id):
+                    return entry.get('idx')
         return None
 
     @property
     def extra_state_attributes(self):
-        overview = self.team_data.get('overview', {})
-        table_data = overview.get('table', [{}])
-        if not table_data:
+        tables = self.team_data.get('overview', {}).get('table', [])
+        if not tables:
             return {}
             
-        league_info = table_data[0].get('data', {})
-        rows = league_info.get('table', {}).get('all', [])
+        # We prefer the table that contains our team
+        league_info = {}
+        rows = []
+        for table_container in tables:
+            current_rows = table_container.get('data', {}).get('table', {}).get('all', [])
+            if any(str(row.get('id')) == str(self._team_id) for row in current_rows):
+                league_info = table_container.get('data', {})
+                rows = current_rows
+                break
+        
+        if not rows and tables:
+            # Fallback to first table if team not found in any (unlikely)
+            league_info = tables[0].get('data', {})
+            rows = league_info.get('table', {}).get('all', [])
         
         formatted_table = []
         for row in rows:

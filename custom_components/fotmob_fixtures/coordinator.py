@@ -22,7 +22,7 @@ class FotMobDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Fetch data from FotMob API."""
-        base_url = "https://www.fotmob.com/api/teams?id={self.team_id}"
+        base_url = f"https://www.fotmob.com/api/teams?id={self.team_id}"
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
