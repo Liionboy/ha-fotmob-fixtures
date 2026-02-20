@@ -1,12 +1,15 @@
 {
     "domain": "fotmob_fixtures",
     "name": "FotMob Fixtures",
-    "documentation": "https://github.com/home-assistant/example-custom-config",
+    "documentation": "https://github.com/Liionboy/ha-fotmob-fixtures",
+    "issue_tracker": "https://github.com/Liionboy/ha-fotmob-fixtures/issues",
     "requirements": [
         "requests"
     ],
     "dependencies": [],
-    "codeowners": [],
+    "codeowners": [
+        "@Liionboy"
+    ],
     "version": "1.2.0",
     "iot_class": "cloud_polling",
     "config_flow": true
