@@ -298,14 +298,25 @@ class FotMobTeamHistorySensor(FotMobBaseSensor):
     def state(self):
         history = self.team_data.get('history', {})
         trophies = history.get('trophyList', [])
-        total_trophies = sum([int(t.get('count', 0)) for t in trophies])
+        total_trophies = sum([int(t.get('won', ['0'])[0]) for t in trophies])
         return total_trophies
 
     @property
     def extra_state_attributes(self):
         history = self.team_data.get('history', {})
+        trophies = history.get('trophyList', [])
+        
+        # Flatten the list-based structure from FotMob
+        flattened_trophies = []
+        for t in trophies:
+            flattened_trophies.append({
+                "name": t.get("name", ["N/A"])[0],
+                "count": int(t.get("won", ["0"])[0]),
+                "seasons": t.get("season_won", [""])[0]
+            })
+            
         return {
-            "trophies": history.get('trophyList', [])
+            "trophies": flattened_trophies
         }
 
     @property
