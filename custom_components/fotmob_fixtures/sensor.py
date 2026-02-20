@@ -250,7 +250,9 @@ class FotMobTopScorerSensor(FotMobBaseSensor):
         players = self.team_data.get('overview', {}).get('topPlayers', {}).get('byGoals', {}).get('players', [])
         if players:
             player = players[0]
-            return f"{player.get('name')} ({player.get('rank')} goals)"
+            name = player.get('name', 'N/A')
+            goals = player.get('rank', 0) # API uses 'rank' as goal count in some contexts
+            return f"{name} ({goals} goals)"
         return "N/A"
 
     @property
@@ -270,7 +272,9 @@ class FotMobTopRatingSensor(FotMobBaseSensor):
         players = self.team_data.get('overview', {}).get('topPlayers', {}).get('byRating', {}).get('players', [])
         if players:
             player = players[0]
-            return f"{player.get('name')} ({player.get('rank')})"
+            name = player.get('name', 'N/A')
+            rating = player.get('rank', '0.0')
+            return f"{name} ({rating})"
         return "N/A"
 
     @property
@@ -318,21 +322,40 @@ class FotMobTeamHistorySensor(FotMobBaseSensor):
     def state(self):
         history = self.team_data.get('history', {})
         trophies = history.get('trophyList', [])
-        total_trophies = sum([int(t.get('won', ['0'])[0]) for t in trophies])
-        return total_trophies
+        total = 0
+        for t in trophies:
+            won = t.get('won', [])
+            if isinstance(won, list) and len(won) > 0:
+                try:
+                    total += int(won[0])
+                except (ValueError, TypeError):
+                    pass
+        return total
 
     @property
     def extra_state_attributes(self):
         history = self.team_data.get('history', {})
         trophies = history.get('trophyList', [])
         
-        # Flatten the list-based structure from FotMob
         flattened_trophies = []
         for t in trophies:
+            name_list = t.get("name", ["N/A"])
+            won_list = t.get("won", ["0"])
+            season_list = t.get("season_won", [""])
+            
+            name = name_list[0] if isinstance(name_list, list) and name_list else "N/A"
+            count_str = won_list[0] if isinstance(won_list, list) and won_list else "0"
+            seasons = season_list[0] if isinstance(season_list, list) and season_list else ""
+            
+            try:
+                count = int(count_str)
+            except (ValueError, TypeError):
+                count = 0
+                
             flattened_trophies.append({
-                "name": t.get("name", ["N/A"])[0],
-                "count": int(t.get("won", ["0"])[0]),
-                "seasons": t.get("season_won", [""])[0]
+                "name": name,
+                "count": count,
+                "seasons": seasons
             })
             
         return {
@@ -366,7 +389,7 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
     def extra_state_attributes(self):
         tables = self.team_data.get('overview', {}).get('table', [])
         if not tables:
-            return {}
+            return {"league_name": "N/A", "table": []}
             
         # We prefer the table that contains our team
         league_info = {}
@@ -399,18 +422,18 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
                 "wins": row.get("wins"),
                 "draws": row.get("draws"),
                 "losses": row.get("losses"),
-                "goals": row.get("scoresStr"), # Format "47-25"
+                "goals": row.get("scoresStr", "-"),
                 "gd": row.get("goalConDiff"),
                 "pts": row.get("pts"),
                 "form": form_results,
-                "next_id": row.get("next"), # FotMob often puts next opponent id here
-                "color": row.get("qualColor") or row.get("color"), # Qual color for vertical line
+                "next_id": row.get("next"),
+                "color": row.get("qualColor") or row.get("color") or "", 
                 "deduction": row.get("deductionReason"),
                 "is_current": str(row.get('id')) == str(self._team_id)
             })
             
         return {
-            "league_name": league_info.get("leagueName"),
+            "league_name": league_info.get("leagueName", "N/A"),
             "table": formatted_table
         }
 
