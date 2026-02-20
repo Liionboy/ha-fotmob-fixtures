@@ -358,6 +358,12 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
         
         formatted_table = []
         for row in rows:
+            # Extract form results
+            raw_form = row.get('form', [])
+            form_results = []
+            if isinstance(raw_form, list):
+                form_results = [f.get('result', '?') for f in raw_form]
+            
             formatted_table.append({
                 "rank": row.get("idx"),
                 "team": row.get("name"),
@@ -368,6 +374,8 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
                 "losses": row.get("losses"),
                 "gd": row.get("goalConDiff"),
                 "pts": row.get("pts"),
+                "form": form_results,
+                "deduction": row.get("deductionReason"),
                 "is_current": str(row.get('id')) == str(self._team_id)
             })
             
