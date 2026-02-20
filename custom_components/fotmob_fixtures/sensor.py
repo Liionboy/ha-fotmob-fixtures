@@ -30,6 +30,7 @@ async def async_setup_entry(
         FotMobTopRatingSensor(coordinator, team_id),
         FotMobTeamTransfersSensor(coordinator, team_id),
         FotMobTeamHistorySensor(coordinator, team_id),
+        FotMobLeagueTableSensor(coordinator, team_id),
     ]
     
     async_add_entities(entities)
@@ -322,3 +323,59 @@ class FotMobTeamHistorySensor(FotMobBaseSensor):
     @property
     def icon(self):
         return "mdi:trophy"
+
+class FotMobLeagueTableSensor(FotMobBaseSensor):
+    """Sensor for full league table."""
+    entity_description_key = "league_table"
+
+    @property
+    def name(self):
+        return f"{self.team_name} League Table"
+
+    @property
+    def state(self):
+        # State is the current team's position
+        overview = self.team_data.get('overview', {})
+        table_data = overview.get('table', [{}])
+        if not table_data:
+            return None
+            
+        rows = table_data[0].get('data', {}).get('table', {}).get('all', [])
+        for entry in rows:
+            if str(entry.get('id')) == str(self._team_id):
+                return entry.get('idx')
+        return None
+
+    @property
+    def extra_state_attributes(self):
+        overview = self.team_data.get('overview', {})
+        table_data = overview.get('table', [{}])
+        if not table_data:
+            return {}
+            
+        league_info = table_data[0].get('data', {})
+        rows = league_info.get('table', {}).get('all', [])
+        
+        formatted_table = []
+        for row in rows:
+            formatted_table.append({
+                "rank": row.get("idx"),
+                "team": row.get("name"),
+                "team_id": row.get("id"),
+                "played": row.get("played"),
+                "wins": row.get("wins"),
+                "draws": row.get("draws"),
+                "losses": row.get("losses"),
+                "gd": row.get("goalConDiff"),
+                "pts": row.get("pts"),
+                "is_current": str(row.get('id')) == str(self._team_id)
+            })
+            
+        return {
+            "league_name": league_info.get("leagueName"),
+            "table": formatted_table
+        }
+
+    @property
+    def icon(self):
+        return "mdi:table-large"
