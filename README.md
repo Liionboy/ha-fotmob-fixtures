@@ -7,8 +7,10 @@ This custom component for Home Assistant allows you to track upcoming matches fo
 ## Features
 
 - **UI-Based Configuration**: No YAML required! Setup teams directly via the Home Assistant Integrations page.
-- **Track Any Team**: Simply provide a FotMob Team ID.
-- **Rich Attributes**: Provides match time, opponent name, opponent logo, competition name, and home/away status.
+- **7 specialized Sensors**: Track Match details, League Position, Points, Form, Matches Played, Top Scorer, and Top Rating.
+- **LIVE Match Support**: Real-time scores and status updates during the match.
+- **Efficient Data Fetching**: Uses a centralized `DataUpdateCoordinator` to fetch all team data in a single API call per minute.
+- **Rich Attributes**: Comprehensive match details, opponent logos, and competition info.
 - **HACS Support**: Easy installation and updates through HACS.
 
 ## Installation
@@ -35,8 +37,7 @@ This custom component for Home Assistant allows you to track upcoming matches fo
 2. Click **Add Integration** in the bottom right.
 3. Search for **FotMob Fixtures**.
 4. Enter the **Team ID** for the team you want to track.
-5. (Optional) Provide a custom name for the sensor.
-6. Click **Submit**.
+5. Click **Submit**.
 
 ## How to Find Your Team ID
 
@@ -48,9 +49,21 @@ This custom component for Home Assistant allows you to track upcoming matches fo
 
 ## Sensor Entities
 
-The integration creates a sensor: `sensor.[team_name]_next_match`.
+The integration creates 7 sensors for each team:
 
-### Attributes
+| Sensor | Description | Example State |
+| --- | --- | --- |
+| `Match` | Current LIVE score or next scheduled match | `LIVE: 2 - 1` or `Team A vs Team B` |
+| `Position` | Current league position | `3` |
+| `Points` | Current league points | `55` |
+| `Form` | Recent results (Win/Draw/Loss) | `W-D-W-L-W` |
+| `Played` | Total matches played in the league | `25` |
+| `Top Scorer` | Team's top scorer and goal count | `Player Name (12 goals)` |
+| `Top Rating` | Highest rated player in the team | `Player Name (8.5)` |
+
+### Match Sensor Attributes
+
+The primary Match sensor provides rich metadata:
 
 - `team_name`: Name of the tracked team.
 - `opponent`: Name of the opponent.
@@ -59,6 +72,8 @@ The integration creates a sensor: `sensor.[team_name]_next_match`.
 - `league`: Competition name (Premier League, La Liga, etc.).
 - `match`: Full match name.
 - `timestamp`: Match start time in ISO format.
+- `status`: `Live` or `Scheduled`.
+- `score`: Current score string.
 
 ## Credits
 
