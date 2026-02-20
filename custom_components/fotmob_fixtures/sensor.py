@@ -16,8 +16,8 @@ _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME_PREFIX = "FotMob"
 
-# Update every 6 hours
-SCAN_INTERVAL = timedelta(hours=6)
+# Update more frequently to support live scores (every 1 minute)
+SCAN_INTERVAL = timedelta(minutes=1)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_TEAM_ID): cv.string,
@@ -33,7 +33,6 @@ async def async_setup_entry(
     team_id = config_entry.data.get(CONF_TEAM_ID)
     name = config_entry.data.get(CONF_NAME)
     
-    # Use unique_id to prevent duplicates
     unique_id = f"fotmob_{team_id}"
     
     async_add_entities([FotMobFixturesSensor(team_id, name, unique_id)], True)
@@ -92,46 +91,56 @@ class FotMobFixturesSensor(SensorEntity):
 
             data = response.json()
             
-            # Update team name if not set or if using default
             if not self._team_name:
                 self._team_name = data.get('details', {}).get('name')
                 if self._team_name and not self._custom_name:
-                    self._name = f"{self._team_name} Next Match"
+                    self._name = f"{self._team_name}"
 
             fixtures = data.get('fixtures', {}).get('allFixtures', {}).get('fixtures', [])
             
-            # Use UTC now for comparison
-            now = datetime.now().timestamp()
+            active_match = None
             
-            next_match = None
+            # Prioritize matches: 1. Live, 2. Starting, 3. Next Upcoming
+            upcoming_matches = []
+            
             for fix in fixtures:
-                utc_time = fix.get('status', {}).get('utcTime')
-                if utc_time:
-                    try:
-                        dt = datetime.fromisoformat(utc_time.replace('Z', '+00:00'))
-                        if dt.timestamp() > now:
-                            next_match = fix
-                            break
-                    except ValueError:
-                        continue
+                status = fix.get('status', {})
+                if status.get('started') and not status.get('finished'):
+                    active_match = fix
+                    break
+                if not status.get('started'):
+                    upcoming_matches.append(fix)
             
-            if next_match:
-                self._state = next_match.get('status', {}).get('utcTime')
-                home_team = next_match.get('home', {}).get('name')
-                away_team = next_match.get('away', {}).get('name')
+            match_to_track = active_match or (upcoming_matches[0] if upcoming_matches else None)
+            
+            if match_to_track:
+                status = match_to_track.get('status', {})
+                home_team = match_to_track.get('home', {}).get('name')
+                away_team = match_to_track.get('away', {}).get('name')
+                home_id = match_to_track.get('home', {}).get('id')
+                away_id = match_to_track.get('away', {}).get('id')
                 
-                is_home = str(next_match.get('home', {}).get('id')) == str(self._team_id)
+                is_home = str(home_id) == str(self._team_id)
                 opponent = away_team if is_home else home_team
-                opponent_id = next_match.get('away', {}).get('id') if is_home else next_match.get('home', {}).get('id')
+                opponent_id = away_id if is_home else home_id
                 
+                # Set State: Show score if live, otherwise show match summary
+                if status.get('started') and not status.get('finished'):
+                    score = status.get('scoreStr', '0 - 0')
+                    self._state = f"LIVE: {score}"
+                else:
+                    self._state = f"{home_team} vs {away_team}"
+
                 self._attributes = {
                     "team_name": self._team_name,
                     "opponent": opponent,
                     "opponent_logo": f"https://images.fotmob.com/image_resources/logo/teamlogo/{opponent_id}.png",
                     "home_away": "Home" if is_home else "Away",
-                    "league": next_match.get('league', {}).get('name'),
+                    "league": match_to_track.get('league', {}).get('name'),
                     "match": f"{home_team} vs {away_team}",
-                    "timestamp": next_match.get('status', {}).get('utcTime')
+                    "timestamp": status.get('utcTime'),
+                    "status": "Live" if (status.get('started') and not status.get('finished')) else "Scheduled",
+                    "score": status.get('scoreStr') if status.get('started') else None
                 }
             else:
                 self._state = "No upcoming matches"
