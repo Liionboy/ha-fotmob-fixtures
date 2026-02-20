@@ -1,0 +1,22 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Configure FotMob Team",
+                "description": "Enter the FotMob Team ID and an optional name for the sensor.",
+                "data": {
+                    "team_id": "Team ID",
+                    "name": "Friendly Name (Optional)"
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "Failed to connect to FotMob",
+            "invalid_team": "Invalid Team ID or team not found",
+            "unknown": "Unexpected error"
+        },
+        "abort": {
+            "already_configured": "Device is already configured"
+        }
+    }
+}

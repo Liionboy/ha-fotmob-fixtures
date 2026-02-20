@@ -1,0 +1,13 @@
+{
+    "domain": "fotmob_fixtures",
+    "name": "FotMob Fixtures",
+    "documentation": "https://github.com/home-assistant/example-custom-config",
+    "requirements": [
+        "requests"
+    ],
+    "dependencies": [],
+    "codeowners": [],
+    "version": "1.2.0",
+    "iot_class": "cloud_polling",
+    "config_flow": true
+}
