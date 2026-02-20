@@ -27,35 +27,52 @@ class FotMobDataUpdateCoordinator(DataUpdateCoordinator):
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
 
-        async def fetch_tab(tab=None):
-            url = f"https://www.fotmob.com/api/teams?id={self.team_id}"
-            if tab:
-                url += f"&tab={tab}"
-            
-            response = await self.hass.async_add_executor_job(
-                lambda: requests.get(url, headers=headers, timeout=15)
-            )
-            
-            if response.status_code != 200:
-                _LOGGER.warning("Error fetching FotMob tab %s: %s", tab or 'overview', response.status_code)
+        async def fetch_json(url):
+            try:
+                response = await self.hass.async_add_executor_job(
+                    lambda: requests.get(url, headers=headers, timeout=15)
+                )
+                if response.status_code != 200:
+                    _LOGGER.warning("Error fetching FotMob URL %s: %s", url, response.status_code)
+                    return {}
+                return response.json()
+            except Exception as e:
+                _LOGGER.error("Exception fetching FotMob URL %s: %s", url, e)
                 return {}
-            return response.json()
 
         try:
-            # Fetch overview, transfers, and history in parallel (simulated here with async_add_executor_job or sequential for simplicity, but coordinator needs to stay robust)
-            # For now, let's fetch them and merge.
-            overview = await fetch_tab()
-            transfers = await fetch_tab("transfers")
-            history = await fetch_tab("history")
+            # 1. Fetch overview first
+            overview = await fetch_json(base_url)
+            if not overview:
+                return {}
 
-            # Merge results
+            # 2. Discover leagueId for full table data
+            league_id = None
+            tables = overview.get("overview", {}).get("table", [])
+            if tables:
+                league_id = tables[0].get("data", {}).get("leagueId")
+
+            # 3. Fetch secondary data in parallel (transfers, history, league_table)
+            transfers = await fetch_json(f"{base_url}&tab=transfers")
+            history = await fetch_json(f"{base_url}&tab=history")
+            
+            league_data = {}
+            if league_id:
+                league_data = await fetch_json(f"https://www.fotmob.com/api/leagues?id={league_id}")
+
+            # Merge everything
             data = overview
             if transfers:
                 data["transfers"] = transfers.get("transfers", {})
             if history:
                 data["history"] = history.get("history", {})
+            if league_data:
+                data["league_table"] = league_data
 
             return data
+
+        except Exception as err:
+            raise UpdateFailed(f"Unexpected error updating FotMob data: {err}")
 
         except Exception as err:
             raise UpdateFailed(f"Unexpected error updating FotMob data: {err}")
