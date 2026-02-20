@@ -60,6 +60,8 @@ The integration creates 7 sensors for each team:
 | `Played` | Total matches played in the league | `25` |
 | `Top Scorer` | Team's top scorer and goal count | `Player Name (12 goals)` |
 | `Top Rating` | Highest rated player in the team | `Player Name (8.5)` |
+| `Transfers` | Most recent incoming transfer | `Player Name` |
+| `History` | Total number of trophies won | `12` |
 
 ### Match Sensor Attributes
 

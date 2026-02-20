@@ -28,6 +28,8 @@ async def async_setup_entry(
         FotMobMatchesPlayedSensor(coordinator, team_id),
         FotMobTopScorerSensor(coordinator, team_id),
         FotMobTopRatingSensor(coordinator, team_id),
+        FotMobTeamTransfersSensor(coordinator, team_id),
+        FotMobTeamHistorySensor(coordinator, team_id),
     ]
     
     async_add_entities(entities)
@@ -254,3 +256,58 @@ class FotMobTopRatingSensor(FotMobBaseSensor):
     @property
     def icon(self):
         return "mdi:trending-up"
+
+class FotMobTeamTransfersSensor(FotMobBaseSensor):
+    """Sensor for team transfers."""
+    entity_description_key = "transfers"
+
+    @property
+    def name(self):
+        return f"{self.team_name} Transfers"
+
+    @property
+    def state(self):
+        transfers = self.team_data.get('transfers', {}).get('data', {})
+        players_in = transfers.get('Players in', [])
+        if players_in:
+            return players_in[0].get('name', 'N/A')
+        return "No recent transfers"
+
+    @property
+    def extra_state_attributes(self):
+        transfers = self.team_data.get('transfers', {}).get('data', {})
+        return {
+            "players_in": transfers.get('Players in', []),
+            "players_out": transfers.get('Players out', []),
+            "contract_extensions": transfers.get('Contract extensions', [])
+        }
+
+    @property
+    def icon(self):
+        return "mdi:transfer"
+
+class FotMobTeamHistorySensor(FotMobBaseSensor):
+    """Sensor for team history (trophies)."""
+    entity_description_key = "history"
+
+    @property
+    def name(self):
+        return f"{self.team_name} History"
+
+    @property
+    def state(self):
+        history = self.team_data.get('history', {})
+        trophies = history.get('trophyList', [])
+        total_trophies = sum([int(t.get('count', 0)) for t in trophies])
+        return total_trophies
+
+    @property
+    def extra_state_attributes(self):
+        history = self.team_data.get('history', {})
+        return {
+            "trophies": history.get('trophyList', [])
+        }
+
+    @property
+    def icon(self):
+        return "mdi:trophy"
