@@ -399,9 +399,12 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
                 "wins": row.get("wins"),
                 "draws": row.get("draws"),
                 "losses": row.get("losses"),
+                "goals": row.get("scoresStr"), # Format "47-25"
                 "gd": row.get("goalConDiff"),
                 "pts": row.get("pts"),
                 "form": form_results,
+                "next_id": row.get("next"), # FotMob often puts next opponent id here
+                "color": row.get("qualColor") or row.get("color"), # Qual color for vertical line
                 "deduction": row.get("deductionReason"),
                 "is_current": str(row.get('id')) == str(self._team_id)
             })
