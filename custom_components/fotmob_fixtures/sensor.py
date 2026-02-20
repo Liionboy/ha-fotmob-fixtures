@@ -387,11 +387,11 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
 
     @property
     def extra_state_attributes(self):
-        # 1. Try to get data from the full league_table fetch first (contains form and next match)
+        # 1. Try to get data from the full league_table fetch first
         league_data = self.team_data.get('league_table', {})
         tables = league_data.get('table', [])
         
-        # If league_table fetch failed or is missing, fallback to overview table (lite version)
+        # If league_table fetch failed or is missing, fallback to overview table
         if not tables:
             tables = self.team_data.get('overview', {}).get('table', [])
             
@@ -401,38 +401,62 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
         # We prefer the table that contains our team
         league_info = {}
         rows = []
+        table_data_obj = {}
         for table_container in tables:
-            current_rows = table_container.get('data', {}).get('table', {}).get('all', [])
+            t_data = table_container.get('data', {}).get('table', {})
+            current_rows = t_data.get('all', [])
             if any(str(row.get('id')) == str(self._team_id) for row in current_rows):
                 league_info = table_container.get('data', {})
+                table_data_obj = t_data
                 rows = current_rows
                 break
         
         if not rows and tables:
             league_info = tables[0].get('data', {})
-            rows = league_info.get('table', {}).get('all', [])
+            table_data_obj = league_info.get('table', {})
+            rows = table_data_obj.get('all', [])
+        
+        # High-Fidelity Merge: Create maps for form and next opponents
+        form_map = {}
+        # 'form' is often a list of dicts with team IDs
+        for f_entry in table_data_obj.get('form', []):
+            t_id = str(f_entry.get('id'))
+            form_map[t_id] = f_entry.get('form', [])
+            
+        next_map = {}
+        # 'nextOpponent' is often a dict keyed by team ID
+        # Format: { team_id: [fixture_id, time, opponent_id, opponent_name, ...] }
+        next_obj = table_data_obj.get('nextOpponent')
+        if isinstance(next_obj, dict):
+            for t_id, data in next_obj.items():
+                if isinstance(data, list) and len(data) >= 3:
+                    next_map[str(t_id)] = data[2] # Opponent Team ID
         
         formatted_table = []
         for row in rows:
-            # Extract form results - check for both list of strings or list of dicts from league API
-            raw_form = row.get('form', [])
+            t_id = str(row.get('id'))
+            
+            # 1. Extract form (prefer merge, fallback to row-local)
             form_results = []
+            raw_form = form_map.get(t_id) or row.get('form', [])
+            
             if isinstance(raw_form, list):
                 for f in raw_form:
                     if isinstance(f, dict):
-                        form_results.append(f.get('resultString', '?'))
+                        form_results.append(f.get('resultString', f.get('result', '?')))
                     elif isinstance(f, str):
                         form_results.append(f)
                     else:
-                        form_results.append(str(f.get('result', '?')) if isinstance(f, dict) else '?')
+                        form_results.append('?')
 
-            # Extract next opponent ID safely
-            next_opponent = row.get("next")
-            next_id = None
-            if isinstance(next_opponent, list) and len(next_opponent) > 0:
-                next_id = next_opponent[0].get("id")
-            elif isinstance(next_opponent, (str, int)):
-                next_id = next_opponent
+            # 2. Extract next opponent (prefer merge, fallback to row-local)
+            next_id = next_map.get(t_id)
+            if not next_id:
+                next_opponent = row.get("next")
+                if isinstance(next_opponent, list) and len(next_opponent) > 0:
+                    next_id = next_opponent[0].get("id")
+                elif isinstance(next_opponent, (str, int)):
+                    next_id = next_opponent
 
             formatted_table.append({
                 "rank": row.get("idx"),
@@ -449,7 +473,7 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
                 "next_id": next_id,
                 "color": row.get("qualColor") or row.get("color") or "", 
                 "deduction": row.get("deductionReason"),
-                "is_current": str(row.get('id')) == str(self._team_id)
+                "is_current": t_id == str(self._team_id)
             })
             
         return {
