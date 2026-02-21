@@ -10,7 +10,7 @@
     "codeowners": [
         "@Liionboy"
     ],
-    "version": "1.8.2",
+    "version": "1.8.3",
     "iot_class": "cloud_polling",
     "config_flow": true
 }

@@ -697,7 +697,9 @@ class FotMobCoachSensor(FotMobBaseSensor):
 
     @property
     def extra_state_attributes(self):
-        coach = self.team_data.get('coach', {}) or self.team_data.get('overview', {}).get('coach', {})
+        coach = self.team_data.get('coach', {})
+        if not coach:
+            coach = self.team_data.get('overview', {}).get('coach', {})
         
         if isinstance(coach, dict) and coach.get('name'):
             return {
