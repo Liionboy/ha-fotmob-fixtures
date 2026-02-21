@@ -2,7 +2,8 @@
 
 This custom component for Home Assistant allows you to track upcoming matches for any football team using data from [FotMob](https://www.fotmob.com/).
 
-![FotMob Fixtures Banner](https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2693&auto=format&fit=crop)
+<img width="256" height="256" alt="logo" src="https://github.com/user-attachments/assets/939ac7f9-4249-41f4-b4cb-f952a2a55838" />
+
 
 ## Features
 
