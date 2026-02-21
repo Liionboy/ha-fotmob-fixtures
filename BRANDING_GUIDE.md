@@ -1,37 +1,45 @@
-# FotMob Fixtures Branding Kit (Mode 1)
+# 🎨 FotMob Fixtures Branding Guide
 
-To have your integration look professional in the Home Assistant "Devices & Services" list, you need to submit assets to the official [Home Assistant Brands](https://github.com/home-assistant/brands) repository.
+Pentru a avea o iconiță oficială în Home Assistant și HACS, urmează acești pași simpli. Din motive tehnice, nu pot genera fișierele `.png` direct în repository-ul tău, dar iată tot ce ai nevoie:
 
-## Required Assets
+### 1. Descarcă Iconițele
 
-### 1. Icon (`icon.png`)
+Alege o imagine reprezentativă (o minge de fotbal verde stilizată). Recomand aceste resurse gratuite care se potrivesc cu stilul FotMob:
 
-- **Dimensions**: 512x512 pixels.
-- **Background**: Transparent.
-- **Content**: A minimalist soccer ball or logo.
+- [Mingea de Fotbal Verde (Icons8)](https://icons8.com/icon/82766/soccer-ball) - Descarcă varianta PNG de 512x512.
+- [Mingea de Fotbal Verde (Flaticon)](https://www.flaticon.com/free-icon/soccer_861506)
 
-### 2. Logo (`logo.png`)
+### 2. Redenumește și Pune Fișierele în Root
 
-- **Dimensions**: 1000x400 pixels (approx).
-- **Background**: Transparent.
-- **Content**: Icon + "FotMob Fixtures" text.
+Salvează fișierul ales de două ori în folderul rădăcină al integrării tale (`custom_components/fotmob_fixtures/`):
 
-## Recommended Images to Use
+- `icon.png` (recomandat 512x512 sau 1024x1024)
+- `logo.png` (poate fi același fișier sau unul care conține și textul "FotMob Fixtures")
 
-Since I am an AI, I suggest using these high-quality placeholder URLs which are perfect for a sports integration:
+### 3. Înregistrare Oficială (Fără să clonezi tot repo-ul!)
 
-- **Icon**: `https://raw.githubusercontent.com/home-assistant/brands/master/custom_integrations/flunearby/icon.png` (as a template) or search for "Soccer Ball PNG 512x512 transparent".
-- **Real Pro Tip**: Use the official FotMob favicon if you want it to look 100% authentic.
+Deoarece repo-ul `brands` este uriaș, cea mai simplă metodă de a trimite pozele este direct prin interfața GitHub (Web UI):
 
-## Submission Steps (The "Pro" Way)
+1. **Mergi la Fork-ul tău**: [Liionboy/brands](https://github.com/Liionboy/brands).
+2. **Navighează la folderul corect**: Intră în folderul `custom_integrations`.
+3. **Creează folderul tău**:
+    - Apasă pe **Add file** -> **Create new file**.
+    - În căsuța pentru nume, scrie exact: `fotmob_fixtures/placeholder` (scrisul `fotmob_fixtures/` va crea automat folderul).
+    - Apasă **Commit changes** (nu contează ce e în fișier, îl ștergem noi după).
+4. **Urcă pozele**:
+    - Acum că ești în folderul `custom_integrations/fotmob_fixtures/`, apasă pe **Add file** -> **Upload files`.
+    - Trage pozele `icon.png` și `logo.png` (cele pe care le-ai pregătit deja).
+    - Apasă **Commit changes**.
+5. **Creează Pull Request-ul**: După ce ai urcat pozele, GitHub îți va arăta un buton mare verde: **"Compare & pull request"**. Apasă-l și trimite-l către Home Assistant!
 
-1. **Fork the Repo**: Go to [github.com/home-assistant/brands](https://github.com/home-assistant/brands) and click **Fork**.
-2. **Create Folder**: In your fork, create a new folder: `custom_integrations/fotmob_fixtures/`.
-3. **Upload Files**: Upload your `icon.png` and `logo.png` into that folder.
-4. **Pull Request**: Go back to the original repo and click **New Pull Request**.
-5. **Wait**: Once approved (usually a few days), Home Assistant will automatically pull the images based on the domain `fotmob_fixtures`.
+### 4. Actualizare GitHub local (Opțional)
 
-## Why this is better?
+Dacă vrei să păstrezi fișierele și în codul tău local:
 
-- It makes your integration look like a built-in feature of Home Assistant.
-- It provides a premium experience for anyone else using your custom repository!
+```bash
+git add icon.png logo.png
+git commit -m "Add branding assets"
+git push origin main
+```
+
+Odată ce aceste fișiere sunt pe GitHub, HACS va începe să le folosească în paginile de prezentare a repository-ului! ⚽🚀

@@ -185,35 +185,33 @@ class FotMobTeamFormSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        # 1. Try to get high-fidelity form from league_table merge
+        # Try league_table first (full API), fallback to overview
         league_data = self.team_data.get('league_table', {})
         tables = league_data.get('table', [])
-        
-        # Fallback to overview if needed
         if not tables:
             tables = self.team_data.get('overview', {}).get('table', [])
 
         for table_container in tables:
-            t_data = table_container.get('data', {}).get('table', {})
-            form_map = {}
-            for f_entry in t_data.get('form', []):
-                form_map[str(f_entry.get('id'))] = f_entry.get('form', [])
+            # teamForm is at table_container level, NOT inside data.table
+            team_form = table_container.get('teamForm', {})
+            form_entries = team_form.get(str(self._team_id), [])
             
-            rows = t_data.get('all', [])
+            if form_entries:
+                results = []
+                for f in form_entries:
+                    if isinstance(f, dict):
+                        results.append(f.get('resultString', f.get('result', '?')))
+                    elif isinstance(f, str):
+                        results.append(f)
+                return "-".join(results) if results else "N/A"
+            
+            # Fallback: check row-level form data
+            rows = table_container.get('data', {}).get('table', {}).get('all', [])
             for entry in rows:
-                t_id = str(entry.get('id'))
-                if t_id == str(self._team_id):
-                    # Prefer form_map (high-fidelity), fallback to row-local
-                    form = form_map.get(t_id) or entry.get('form', []) or entry.get('deductionReason')
-                    if isinstance(form, list):
-                        results = []
-                        for f in form:
-                            if isinstance(f, dict):
-                                results.append(f.get('resultString', f.get('result', '?')))
-                            else:
-                                results.append(str(f))
-                        return "-".join(results)
-                    return str(form) if form else "N/A"
+                if str(entry.get('id')) == str(self._team_id):
+                    form = entry.get('form', [])
+                    if isinstance(form, list) and form:
+                        return "-".join([f.get('resultString', f.get('result', '?')) if isinstance(f, dict) else str(f) for f in form])
         return "N/A"
 
     @property
@@ -224,17 +222,14 @@ class FotMobTeamFormSensor(FotMobBaseSensor):
             tables = self.team_data.get('overview', {}).get('table', [])
 
         for table_container in tables:
-            t_data = table_container.get('data', {}).get('table', {})
-            form_map = {}
-            for f_entry in t_data.get('form', []):
-                form_map[str(f_entry.get('id'))] = f_entry.get('form', [])
-
-            rows = t_data.get('all', [])
+            team_form = table_container.get('teamForm', {})
+            form_entries = team_form.get(str(self._team_id), [])
+            
+            rows = table_container.get('data', {}).get('table', {}).get('all', [])
             for entry in rows:
-                t_id = str(entry.get('id'))
-                if t_id == str(self._team_id):
+                if str(entry.get('id')) == str(self._team_id):
                     return {
-                        "form_list": form_map.get(t_id) or entry.get('form', []),
+                        "form_list": form_entries or entry.get('form', []),
                         "deduction": entry.get('deductionReason')
                     }
         return {}
@@ -430,6 +425,7 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
         league_info = {}
         rows = []
         table_data_obj = {}
+        matched_container = None
         for table_container in tables:
             t_data = table_container.get('data', {}).get('table', {})
             current_rows = t_data.get('all', [])
@@ -437,36 +433,38 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
                 league_info = table_container.get('data', {})
                 table_data_obj = t_data
                 rows = current_rows
+                matched_container = table_container
                 break
         
         if not rows and tables:
-            league_info = tables[0].get('data', {})
+            matched_container = tables[0]
+            league_info = matched_container.get('data', {})
             table_data_obj = league_info.get('table', {})
             rows = table_data_obj.get('all', [])
         
-        # High-Fidelity Merge: Create maps for form and next opponents
-        form_map = {}
-        # 'form' is often a list of dicts with team IDs
-        for f_entry in table_data_obj.get('form', []):
-            t_id = str(f_entry.get('id'))
-            form_map[t_id] = f_entry.get('form', [])
+        # High-Fidelity Merge: teamForm and nextOpponent are at table_container level
+        # (sibling of 'data'), NOT inside data.table
+        team_form_map = {}
+        team_form_obj = matched_container.get('teamForm', {}) if matched_container else {}
+        for t_id, entries in team_form_obj.items():
+            team_form_map[str(t_id)] = entries
             
         next_map = {}
-        # 'nextOpponent' is often a dict keyed by team ID
-        # Format: { team_id: [fixture_id, time, opponent_id, opponent_name, ...] }
-        next_obj = table_data_obj.get('nextOpponent')
+        next_obj = matched_container.get('nextOpponent', {}) if matched_container else {}
+        if not isinstance(next_obj, dict):
+            next_obj = table_data_obj.get('nextOpponent', {})
         if isinstance(next_obj, dict):
             for t_id, data in next_obj.items():
                 if isinstance(data, list) and len(data) >= 3:
-                    next_map[str(t_id)] = data[2] # Opponent Team ID
+                    next_map[str(t_id)] = data[2]
         
         formatted_table = []
         for row in rows:
             t_id = str(row.get('id'))
             
-            # 1. Extract form (prefer merge, fallback to row-local)
+            # 1. Extract form from teamForm (high-fidelity), fallback to row-local
             form_results = []
-            raw_form = form_map.get(t_id) or row.get('form', [])
+            raw_form = team_form_map.get(t_id) or row.get('form', [])
             
             if isinstance(raw_form, list):
                 for f in raw_form:
