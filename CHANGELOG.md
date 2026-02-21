@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.7] - 2026-02-21
+
+### Changed
+
+- **Sensors**: Enhanced `timestamp` attribute to include both date and time (e.g., "24/02 20:30") for a more complete view and easier dashboard integration.
+
 ## [1.7.6] - 2026-02-21
 
 ### Changed
