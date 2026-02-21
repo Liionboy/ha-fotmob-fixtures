@@ -671,8 +671,8 @@ class FotMobCoachSensor(FotMobBaseSensor):
     @property
     def state(self):
         coach = self.team_data.get('coach', {})
-        if not coach:
-            coach = self.team_data.get('overview', {}).get('coach', {})
+        if not coach or (isinstance(coach, list) and len(coach) == 0):
+            coach = self.team_data.get('overview', {}).get('lastLineupStats', {}).get('coach', {})
             
         if isinstance(coach, list) and len(coach) > 0 and isinstance(coach[0], list):
             for group in coach:
@@ -698,8 +698,8 @@ class FotMobCoachSensor(FotMobBaseSensor):
     @property
     def extra_state_attributes(self):
         coach = self.team_data.get('coach', {})
-        if not coach:
-            coach = self.team_data.get('overview', {}).get('coach', {})
+        if not coach or (isinstance(coach, list) and len(coach) == 0):
+            coach = self.team_data.get('overview', {}).get('lastLineupStats', {}).get('coach', {})
         
         if isinstance(coach, dict) and coach.get('name'):
             return {
