@@ -24,7 +24,7 @@ def localize_time(utc_time_str):
         utc_dt = dt_util.parse_datetime(utc_time_str)
         if utc_dt:
             local_dt = dt_util.as_local(utc_dt)
-            return local_dt.strftime("%d/%m %H:%M")
+            return local_dt.strftime("%d/%m/%Y %H:%M")
     except Exception:
         pass
     return "N/A"
