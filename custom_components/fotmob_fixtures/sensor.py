@@ -1,5 +1,5 @@
-import logging
 from datetime import datetime
+from homeassistant.util import dt as dt_util
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
@@ -10,6 +10,23 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, CONF_TEAM_ID
 
 _LOGGER = logging.getLogger(__name__)
+
+def localize_time(utc_time_str):
+    """Convert UTC ISO string to local time HH:MM."""
+    if not utc_time_str:
+        return "N/A"
+    try:
+        if isinstance(utc_time_str, list) and len(utc_time_str) > 1:
+            # Handle list format from nextOpponent [team_id, name, time_str]
+            utc_time_str = utc_time_str[1]
+        
+        utc_dt = dt_util.parse_datetime(utc_time_str)
+        if utc_dt:
+            local_dt = dt_util.as_local(utc_dt)
+            return local_dt.strftime("%H:%M")
+    except Exception:
+        pass
+    return "N/A"
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -131,6 +148,7 @@ class FotMobMatchSensor(FotMobBaseSensor):
             "league": match.get('league', {}).get('name'),
             "match": f"{match.get('home', {}).get('name')} vs {match.get('away', {}).get('name')}",
             "timestamp": status.get('utcTime'),
+            "local_time": localize_time(status.get('utcTime')),
             "status": "Live" if (status.get('started') and not status.get('finished')) else "Scheduled",
             "score": status.get('scoreStr')
         }
@@ -456,7 +474,10 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
         if isinstance(next_obj, dict):
             for t_id, data in next_obj.items():
                 if isinstance(data, list) and len(data) >= 3:
-                    next_map[str(t_id)] = data[0]
+                    next_map[str(t_id)] = {
+                        "id": data[0],
+                        "time": localize_time(data[1])
+                    }
         
         formatted_table = []
         for row in rows:
@@ -476,11 +497,15 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
                         form_results.append('?')
 
             # 2. Extract next opponent (prefer merge, fallback to row-local)
-            next_id = next_map.get(t_id)
+            next_data = next_map.get(t_id)
+            next_id = next_data.get("id") if isinstance(next_data, dict) else None
+            next_time = next_data.get("time") if isinstance(next_data, dict) else "N/A"
+
             if not next_id:
                 next_opponent = row.get("next")
                 if isinstance(next_opponent, list) and len(next_opponent) > 0:
                     next_id = next_opponent[0].get("id")
+                    # Fallback time extraction if needed
                 elif isinstance(next_opponent, (str, int)):
                     next_id = next_opponent
 
@@ -497,6 +522,7 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
                 "pts": row.get("pts"),
                 "form": form_results,
                 "next_id": next_id,
+                "next_time": next_time,
                 "color": row.get("qualColor") or row.get("color") or "", 
                 "deduction": row.get("deductionReason"),
                 "is_current": t_id == str(self._team_id)
