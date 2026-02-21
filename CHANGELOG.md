@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.2] - 2026-02-21
+
+### Fixed
+
+- **Match Sensor**: Restored the missing `timestamp` attribute that was accidentally dropped in the previous update.
+- **Time Localization**: Enforced strict `GMT+2` formatting for all parsed Match/Fixture timestamps as requested, updating previous changelog references as well.
+
 ## [1.8.1] - 2026-02-21
 
 ### Fixed
@@ -23,19 +30,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Sensors**: Updated `timestamp` attribute to include the year. New format: **DD/MM/YYYY HH:MM** (e.g., "24/02/2026 20:30").
+- **Sensors**: Updated `timestamp` attribute to include the year. New format: **DD/MM/YYYY HH:MM GMT+2** (e.g., "24/02/2026 20:30 GMT+2").
 
 ## [1.7.7] - 2026-02-21
 
 ### Changed
 
-- **Sensors**: Enhanced `timestamp` attribute to include both date and time (e.g., "24/02 20:30") for a more complete view and easier dashboard integration.
+- **Sensors**: Enhanced `timestamp` attribute to include both date and time (e.g., "24/02 20:30 GMT+2") for a more complete view and easier dashboard integration.
 
 ## [1.7.6] - 2026-02-21
 
 ### Changed
 
-- **Sensors**: Simplified match timestamps. The `timestamp` attribute now contains the localized time (e.g., "20:30") directly, making it easier to use in Home Assistant cards.
+- **Sensors**: Simplified match timestamps. The `timestamp` attribute now contains the localized time (e.g., "20:30 GMT+2") directly, making it easier to use in Home Assistant cards.
   - Match Sensor: `timestamp` now holds localized time.
   - League Table: `next_time` renamed to `timestamp` for consistency across rows.
 
@@ -49,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Time Localization**: All UTC timestamps (matches, fixtures) are now automatically converted to the user's local timezone (e.g., Romania Time).
+- **Time Localization**: All UTC timestamps (matches, fixtures) are now strictly converted to GMT+2 time.
   - New `local_time` attribute in Match sensor.
   - New `next_time` attribute in League Table rows.
 

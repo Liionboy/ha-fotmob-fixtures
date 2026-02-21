@@ -23,8 +23,10 @@ def localize_time(utc_time_str):
         
         utc_dt = dt_util.parse_datetime(utc_time_str)
         if utc_dt:
-            local_dt = dt_util.as_local(utc_dt)
-            return local_dt.strftime("%d/%m/%Y %H:%M")
+            from datetime import timezone, timedelta
+            gmt2 = timezone(timedelta(hours=2))
+            local_dt = utc_dt.astimezone(gmt2)
+            return local_dt.strftime("%d/%m/%Y %H:%M GMT+2")
     except Exception:
         pass
     return "N/A"
@@ -193,6 +195,7 @@ class FotMobMatchSensor(FotMobBaseSensor):
             "opponent_form": opponent_form,
             "difficulty": difficulty
         }
+        return attributes
 
 class FotMobLeaguePositionSensor(FotMobBaseSensor):
     """Sensor for league position."""
