@@ -45,10 +45,13 @@ async def async_setup_entry(
         FotMobTeamFormSensor(coordinator, team_id),
         FotMobMatchesPlayedSensor(coordinator, team_id),
         FotMobTopScorerSensor(coordinator, team_id),
+        FotMobTopAssistSensor(coordinator, team_id),
         FotMobTopRatingSensor(coordinator, team_id),
         FotMobTeamTransfersSensor(coordinator, team_id),
         FotMobTeamHistorySensor(coordinator, team_id),
         FotMobLeagueTableSensor(coordinator, team_id),
+        FotMobStadiumSensor(coordinator, team_id),
+        FotMobCoachSensor(coordinator, team_id),
     ]
     
     async_add_entities(entities)
@@ -142,15 +145,53 @@ class FotMobMatchSensor(FotMobBaseSensor):
         opponent = match.get('away', {}).get('name') if is_home else match.get('home', {}).get('name')
         opponent_id = match.get('away', {}).get('id') if is_home else match.get('home', {}).get('id')
 
-        return {
+        opponent_rank = "N/A"
+        opponent_form = []
+        difficulty = "N/A"
+
+        # Try to find opponent in league table
+        tables = data.get('overview', {}).get('table', [])
+        for table_container in tables:
+            rows = table_container.get('data', {}).get('table', {}).get('all', [])
+            found_opponent = False
+            for row in rows:
+                if str(row.get('id')) == str(opponent_id):
+                    opponent_rank = row.get('idx')
+                    
+                    raw_form = table_container.get('teamForm', {}).get(str(opponent_id)) or row.get('form', [])
+                    if isinstance(raw_form, list):
+                        for f in raw_form:
+                            if isinstance(f, dict):
+                                opponent_form.append(f.get('resultString', f.get('result', '?')))
+                            elif isinstance(f, str):
+                                opponent_form.append(f)
+                    
+                    if isinstance(opponent_rank, int):
+                        if opponent_rank <= 4:
+                            difficulty = "High"
+                        elif opponent_rank <= 10:
+                            difficulty = "Medium"
+                        else:
+                            difficulty = "Low"
+                    
+                    found_opponent = True
+                    break
+            if found_opponent:
+                break
+
+        attributes = {
             "opponent": opponent,
+            "opponent_id": opponent_id,
             "opponent_logo": f"https://images.fotmob.com/image_resources/logo/teamlogo/{opponent_id}.png",
             "home_away": "Home" if is_home else "Away",
             "league": match.get('league', {}).get('name'),
             "match": f"{match.get('home', {}).get('name')} vs {match.get('away', {}).get('name')}",
             "timestamp": localize_time(status.get('utcTime')),
             "status": "Live" if (status.get('started') and not status.get('finished')) else "Scheduled",
-            "score": status.get('scoreStr')
+            "score": status.get('scoreStr'),
+            "opponent_rank": opponent_rank,
+            "opponent_form": opponent_form,
+            "difficulty": difficulty
         }
 
 class FotMobLeaguePositionSensor(FotMobBaseSensor):
@@ -288,17 +329,46 @@ class FotMobTopScorerSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        players = self.team_data.get('overview', {}).get('topPlayers', {}).get('byGoals', {}).get('players', [])
+        # Prefer overview.topPlayers.byGoals, fallback to squad stats
+        players = self.team_data.get('topPlayers', {}).get('byGoals', {}).get('players', [])
+        if not players:
+             players = self.team_data.get('overview', {}).get('topPlayers', {}).get('byGoals', {}).get('players', [])
+        
         if players:
             player = players[0]
             name = player.get('name', 'N/A')
-            goals = player.get('rank', 0) # API uses 'rank' as goal count in some contexts
+            goals = player.get('stat', {}).get('value', player.get('value', player.get('rank', 0)))
             return f"{name} ({goals} goals)"
         return "N/A"
 
     @property
     def icon(self):
         return "mdi:star-circle"
+
+class FotMobTopAssistSensor(FotMobBaseSensor):
+    """Sensor for top assist provider."""
+    entity_description_key = "top_assist"
+
+    @property
+    def name(self):
+        return f"{self.team_name} Top Assist"
+
+    @property
+    def state(self):
+        players = self.team_data.get('topPlayers', {}).get('byAssists', {}).get('players', [])
+        if not players:
+             players = self.team_data.get('overview', {}).get('topPlayers', {}).get('byAssists', {}).get('players', [])
+
+        if players:
+            player = players[0]
+            name = player.get('name', 'N/A')
+            assists = player.get('stat', {}).get('value', player.get('value', player.get('rank', 0)))
+            return f"{name} ({assists} assists)"
+        return "N/A"
+
+    @property
+    def icon(self):
+        return "mdi:handshake"
 
 class FotMobTopRatingSensor(FotMobBaseSensor):
     """Sensor for top rating."""
@@ -533,6 +603,120 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
             "table": formatted_table
         }
 
+class FotMobStadiumSensor(FotMobBaseSensor):
+    """Sensor for team stadium."""
+    entity_description_key = "stadium"
+
+    @property
+    def name(self):
+        return f"{self.team_name} Stadium"
+
+    @property
+    def state(self):
+        details = self.team_data.get('details', {})
+        stadium = details.get('stadium')
+        if not stadium:
+            stadium = details.get('sportsTeamJSONLD', {}).get('location', {}).get('name')
+        if not stadium:
+            stadium = details.get('location', {}).get('name')
+        if not stadium:
+            stadium = details.get('venue', {}).get('name', 'N/A')
+            
+        return stadium if isinstance(stadium, str) else stadium.get('name', 'N/A')
+
+    @property
+    def extra_state_attributes(self):
+        details = self.team_data.get('details', {})
+        location = details.get('sportsTeamJSONLD', {}).get('location', {})
+        if not location:
+            location = details.get('location', {})
+            
+        city = location.get('address', {}).get('addressLocality', 'N/A')
+        country = location.get('address', {}).get('addressCountry', 'N/A')
+        
+        capacity = "N/A"
+        faq = details.get('faqJSONLD', {}).get('mainEntity', [])
+        for q in faq:
+            if 'capacity' in q.get('name', '').lower():
+                answer = q.get('acceptedAnswer', {}).get('text', '')
+                import re
+                match = re.search(r'\b\d{4,6}\b', answer)
+                if match:
+                    capacity = match.group(0)
+                break
+
+        return {
+            "city": city,
+            "country": country,
+            "lat": location.get('geo', {}).get('latitude'),
+            "lon": location.get('geo', {}).get('longitude'),
+            "capacity": capacity
+        }
+
     @property
     def icon(self):
-        return "mdi:table-large"
+        return "mdi:stadium"
+
+class FotMobCoachSensor(FotMobBaseSensor):
+    """Sensor for team coach."""
+    entity_description_key = "coach"
+
+    @property
+    def name(self):
+        return f"{self.team_name} Coach"
+
+    @property
+    def state(self):
+        coach = self.team_data.get('coach', {})
+        if not coach:
+            coach = self.team_data.get('overview', {}).get('coach', {})
+            
+        if isinstance(coach, list) and len(coach) > 0 and isinstance(coach[0], list):
+            for group in coach:
+                if isinstance(group, list) and len(group) == 2 and group[0] == 'Coach':
+                    if isinstance(group[1], list) and len(group[1]) > 0:
+                        return group[1][0].get('name', 'N/A')
+
+        if isinstance(coach, dict) and coach.get('name'):
+            return coach.get('name', 'N/A')
+            
+        # Fallback to squad iteration
+        squad = self.team_data.get('squad', [])
+        for member in squad:
+            if isinstance(member, list) and len(member) > 0 and str(member[0]).lower() == "coach":
+                if len(member) > 1 and isinstance(member[1], list) and len(member[1]) > 0:
+                    coach_name = member[1][0].get('name')
+                    if coach_name:
+                        return coach_name
+
+        return "N/A"
+
+    @property
+    def extra_state_attributes(self):
+        coach = self.team_data.get('coach', {}) or self.team_data.get('overview', {}).get('coach', {})
+        
+        if isinstance(coach, dict) and coach.get('name'):
+            return {
+                "age": coach.get('age', 'N/A'),
+                "country": coach.get('countryName', 'N/A'),
+            }
+            
+        # Fallback to squad iteration
+        squad = self.team_data.get('squad', [])
+        for member in squad:
+            if isinstance(member, list) and len(member) > 0 and str(member[0]).lower() == "coach":
+                if len(member) > 1 and isinstance(member[1], list) and len(member[1]) > 0:
+                    coach_dict = member[1][0]
+                    return {
+                        "age": coach_dict.get('age', 'N/A'),
+                        "country": coach_dict.get('countryName', 'N/A'),
+                    }
+                    
+        return {
+            "age": "N/A",
+            "country": "N/A",
+        }
+
+    @property
+    def icon(self):
+        return "mdi:account-tie"

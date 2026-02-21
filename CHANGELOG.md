@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-02-21
+
+- Added Stadium sensor (Name, City, Capacity, Location).
+- Added Coach sensor (Name, Age, Country).
+- Added Top Assist sensor.
+- Enhanced Match sensor with Opponent Rank and Difficulty proxy.
+- Improved data fallback for Top Scorer and Top Rating sensors.
+
 ## [1.7.8] - 2026-02-21
 
 ### Changed
@@ -44,7 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **League Table**: Fixed missing opponent logos in the "Next" column.
-  - Root cause: Incorrect data index used for opponent team ID extraction.
+
+# 🏆 FotMob Fixtures: Final Project Walkthrough (v1.7.8)index used for opponent team ID extraction
 
 ## [1.7.1] - 2026-02-21
 
