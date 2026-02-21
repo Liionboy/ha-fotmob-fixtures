@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Form Sensor**: Fixed `sensor.team_form` returning `N/A` for all teams.
+**Form Sensor**:
+  - Fixed `sensor.team_form` returning `N/A` for all teams.
   - Root cause: `teamForm` data lives at `table_container` level (sibling of `data`), not inside `data.table`.
   - Both `FotMobTeamFormSensor` and `FotMobLeagueTableSensor` now read from the correct data path.
   - League table "Form" column is now populated correctly for all teams.
