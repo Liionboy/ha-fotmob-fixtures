@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.4] - 2026-02-21
+
+### Added
+
+- **Time Localization**: All UTC timestamps (matches, fixtures) are now automatically converted to the user's local timezone (e.g., Romania Time).
+  - New `local_time` attribute in Match sensor.
+  - New `next_time` attribute in League Table rows.
+
 ## [1.7.3] - 2026-02-21
 
 ### Fixed
@@ -17,10 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 **Form Sensor**:
-  - Fixed `sensor.team_form` returning `N/A` for all teams.
-  - Root cause: `teamForm` data lives at `table_container` level (sibling of `data`), not inside `data.table`.
-  - Both `FotMobTeamFormSensor` and `FotMobLeagueTableSensor` now read from the correct data path.
-  - League table "Form" column is now populated correctly for all teams.
+
+- Fixed `sensor.team_form` returning `N/A` for all teams.
+- Root cause: `teamForm` data lives at `table_container` level (sibling of `data`), not inside `data.table`.
+- Both `FotMobTeamFormSensor` and `FotMobLeagueTableSensor` now read from the correct data path.
+- League table "Form" column is now populated correctly for all teams.
 
 ## [1.7.0] - 2026-02-21
 
