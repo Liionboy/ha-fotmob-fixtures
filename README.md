@@ -7,7 +7,7 @@ This custom component for Home Assistant allows you to track upcoming matches fo
 ## Features
 
 - **UI-Based Configuration**: No YAML required! Setup teams directly via the Home Assistant Integrations page.
-- **7 specialized Sensors**: Track Match details, League Position, Points, Form, Matches Played, Top Scorer, and Top Rating.
+- **12 specialized Sensors**: Track Match details, League Position, Points, Form, Matches Played, Top Scorer, Top Rating, Transfers, History, Complete League Table, Stadium, and Coach.
 - **LIVE Match Support**: Real-time scores and status updates during the match.
 - **Efficient Data Fetching**: Uses a centralized `DataUpdateCoordinator` to fetch all team data in a single API call per minute.
 - **Rich Attributes**: Comprehensive match details, opponent logos, and competition info.
@@ -49,7 +49,7 @@ This custom component for Home Assistant allows you to track upcoming matches fo
 
 ## Sensor Entities
 
-The integration creates 7 sensors for each team:
+The integration creates 12 sensors for each team:
 
 | Sensor | Description | Example State |
 | --- | --- | --- |
@@ -63,6 +63,8 @@ The integration creates 7 sensors for each team:
 | `Transfers` | Most recent incoming transfer | `Player Name` |
 | `History` | Total number of trophies won | `12` |
 | `League Table` | Full league standings and stats | `3` (Position) |
+| `Stadium` | Team's home stadium details | `Stadium Name` |
+| `Coach` | Team's current head coach | `Coach Name` |
 
 ### Match Sensor Attributes
 
@@ -74,9 +76,12 @@ The primary Match sensor provides rich metadata:
 - `home_away`: "Home" or "Away".
 - `league`: Competition name (Premier League, La Liga, etc.).
 - `match`: Full match name.
-- `timestamp`: Match start time in ISO format.
+- `timestamp`: Match start time in local timezone (`DD/MM/YYYY HH:MM GMT+2`).
 - `status`: `Live` or `Scheduled`.
 - `score`: Current score string.
+- `opponent_rank`: Opponent's league rank.
+- `opponent_form`: Opponent's recent form.
+- `difficulty`: Match difficulty (`High`, `Medium`, `Low`).
 
 ## Credits
 
