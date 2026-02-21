@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0] - 2026-02-21
+
+### Fixed
+
+- **Individual Form Sensor**: Fixed missing data for `sensor.team_form` by implementing high-fidelity league merge logic.
+
 ## [1.6.9] - 2026-02-21
 
 ### Added

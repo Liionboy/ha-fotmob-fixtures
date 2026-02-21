@@ -185,28 +185,56 @@ class FotMobTeamFormSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        # Search all tables in overview
-        tables = self.team_data.get('overview', {}).get('table', [])
+        # 1. Try to get high-fidelity form from league_table merge
+        league_data = self.team_data.get('league_table', {})
+        tables = league_data.get('table', [])
+        
+        # Fallback to overview if needed
+        if not tables:
+            tables = self.team_data.get('overview', {}).get('table', [])
+
         for table_container in tables:
-            rows = table_container.get('data', {}).get('table', {}).get('all', [])
+            t_data = table_container.get('data', {}).get('table', {})
+            form_map = {}
+            for f_entry in t_data.get('form', []):
+                form_map[str(f_entry.get('id'))] = f_entry.get('form', [])
+            
+            rows = t_data.get('all', [])
             for entry in rows:
-                if str(entry.get('id')) == str(self._team_id):
-                    form = entry.get('deductionReason') or entry.get('form', [])
+                t_id = str(entry.get('id'))
+                if t_id == str(self._team_id):
+                    # Prefer form_map (high-fidelity), fallback to row-local
+                    form = form_map.get(t_id) or entry.get('form', []) or entry.get('deductionReason')
                     if isinstance(form, list):
-                        return "-".join([f.get('result', '?') for f in form])
-                    return form
+                        results = []
+                        for f in form:
+                            if isinstance(f, dict):
+                                results.append(f.get('resultString', f.get('result', '?')))
+                            else:
+                                results.append(str(f))
+                        return "-".join(results)
+                    return str(form) if form else "N/A"
         return "N/A"
 
     @property
     def extra_state_attributes(self):
-        # Add detailed form attributes for debugging and better UI
-        tables = self.team_data.get('overview', {}).get('table', [])
+        league_data = self.team_data.get('league_table', {})
+        tables = league_data.get('table', [])
+        if not tables:
+            tables = self.team_data.get('overview', {}).get('table', [])
+
         for table_container in tables:
-            rows = table_container.get('data', {}).get('table', {}).get('all', [])
+            t_data = table_container.get('data', {}).get('table', {})
+            form_map = {}
+            for f_entry in t_data.get('form', []):
+                form_map[str(f_entry.get('id'))] = f_entry.get('form', [])
+
+            rows = t_data.get('all', [])
             for entry in rows:
-                if str(entry.get('id')) == str(self._team_id):
+                t_id = str(entry.get('id'))
+                if t_id == str(self._team_id):
                     return {
-                        "form_list": entry.get('form', []),
+                        "form_list": form_map.get(t_id) or entry.get('form', []),
                         "deduction": entry.get('deductionReason')
                     }
         return {}
