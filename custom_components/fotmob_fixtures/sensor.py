@@ -456,7 +456,7 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
         if isinstance(next_obj, dict):
             for t_id, data in next_obj.items():
                 if isinstance(data, list) and len(data) >= 3:
-                    next_map[str(t_id)] = data[2]
+                    next_map[str(t_id)] = data[0]
         
         formatted_table = []
         for row in rows:
