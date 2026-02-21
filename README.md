@@ -84,6 +84,163 @@ The primary Match sensor provides rich metadata:
 - `opponent_form`: Opponent's recent form.
 - `difficulty`: Match difficulty (`High`, `Medium`, `Low`).
 
+  DASHBOARD Exemple:
+```
+  views:
+  - sections:
+      - cards:
+          - type: heading
+            heading: ⚽ Următorul Meci
+          - type: markdown
+            content: >-
+              ## 🆚 {{ state_attr('sensor.rapid_bucuresti_match', 'match') }}
+              **🏟️ {{ state_attr('sensor.rapid_bucuresti_match', 'home_away')
+              }}**
+              {% if state_attr('sensor.rapid_bucuresti_match', 'timestamp') %}
+              **⏰ Ora:** {{ state_attr('sensor.rapid_bucuresti_match',
+              'timestamp') }}
+              {% endif %}
+              **📊 Status:** {{ state_attr('sensor.rapid_bucuresti_match',
+              'status') }}
+              {% if state_attr('sensor.rapid_bucuresti_match', 'score') %}
+              **⚽ Scor:** {{ state_attr('sensor.rapid_bucuresti_match', 'score')
+              }}
+              {% endif %}
+              ---
+              **vs {{ state_attr('sensor.rapid_bucuresti_match', 'opponent')
+              }}**
+              - Loc în clasament: {{ state_attr('sensor.rapid_bucuresti_match',
+              'opponent_rank') }}
+              - Formă: {% for r in state_attr('sensor.rapid_bucuresti_match',
+              'opponent_form') %}{%- set c = '#4CAF50' if r == 'W' else
+              ('#FF9800' if r == 'D' else '#F44336') -%}<span
+              style="background:{{c}};color:white;padding:2px
+              5px;border-radius:3px;font-size:0.8em;">{{r}}</span> {% endfor %}
+              - Dificultate: {{ state_attr('sensor.rapid_bucuresti_match',
+              'difficulty') }}
+          - type: markdown
+            content: >-
+              ## 🏟️ Stadion
+              **{{ states('sensor.rapid_bucuresti_stadium') }}**
+              📍 {{ state_attr('sensor.rapid_bucuresti_stadium', 'city') }}, {{
+              state_attr('sensor.rapid_bucuresti_stadium', 'country') }}
+              👥 Capacitate: {{ state_attr('sensor.rapid_bucuresti_stadium',
+              'capacity') }} locuri
+      - cards:
+          - type: heading
+            heading: 📈 Statistici Rapid
+          - type: grid
+            cards:
+              - type: custom:mushroom-entity-card
+                entity: sensor.rapid_bucuresti_points
+                icon: mdi:numeric
+                icon_color: yellow
+                name: Puncte
+                fill_container: true
+              - type: custom:mushroom-entity-card
+                entity: sensor.rapid_bucuresti_position
+                icon: mdi:format-list-numbered
+                icon_color: blue
+                name: Loc
+                fill_container: true
+              - type: custom:mushroom-entity-card
+                entity: sensor.rapid_bucuresti_played
+                icon: mdi:soccer-field
+                icon_color: orange
+                name: Meciuri
+                fill_container: true
+            title: Performanță
+          - type: custom:mushroom-entity-card
+            entity: sensor.rapid_bucuresti_top_scorer
+            icon: mdi:soccer
+            icon_color: red
+            name: Golgheter
+            fill_container: true
+            layout: vertical
+          - type: custom:mushroom-entity-card
+            entity: sensor.rapid_bucuresti_top_rating
+            icon: mdi:star
+            icon_color: yellow
+            name: Best Player
+            fill_container: true
+            layout: vertical
+          - type: custom:mushroom-entity-card
+            entity: sensor.rapid_bucuresti_coach
+            icon: mdi:account-tie
+            icon_color: purple
+            name: Antrenor
+            fill_container: true
+            layout: vertical
+          - type: custom:mushroom-entity-card
+            entity: sensor.rapid_bucuresti_top_assist
+            icon: mdi:handshake
+            icon_color: cyan
+            name: Top Assist
+            fill_container: true
+            layout: vertical
+      - cards:
+          - type: heading
+            heading: 🔄 Transferuri & Istoric
+          - type: markdown
+            content: >
+              ## 🔄 Transferuri Rapids
+              **📥 Sosiri:** {% for player in
+              state_attr('sensor.rapid_bucuresti_transfers', 'players_in')[:3]
+              %} • {{ player.name }} ({{ player.position.label }}) - de la {{
+              player.fromClub }} {% endfor %}
+              **📤 Plecări:** {% for player in
+              state_attr('sensor.rapid_bucuresti_transfers', 'players_out')[:3]
+              %} • {{ player.name }} ({{ player.position.label }}) - la {{
+              player.toClub }} {% endfor %}
+          - type: markdown
+            content: >-
+              ## 🏆 Trofee Rapid București (14)
+              {% for trophy in state_attr('sensor.rapid_bucuresti_history',
+              'trophies') %}
+              **{{ trophy.name }}: {{ trophy.count }}** 
+              {{ trophy.seasons }}
+              {% endfor %}
+          - type: markdown
+            content: >-
+              ## 📊 Ultimele 5 Meciuri
+              {% for match in state_attr('sensor.rapid_bucuresti_form',
+              'form_list') %}
+              {% if match.home.isOurTeam %}{{ match.away.name }} (D) - {{
+              match.score }}{% else %}{{ match.home.name }} (A) - {{ match.score
+              }}{% endif %} - {{ '🟢' if match.resultString == 'W' else ('🟡' if
+              match.resultString == 'D' else '🔴') }} {{ match.resultString }}
+              {% endfor %}
+      - cards:
+          - type: markdown
+            content: >
+              # <img src="{{ state_attr('sensor.rapid_bucuresti_league_table',
+              'entity_picture') }}" width="30"> Clasament {{
+              state_attr('sensor.rapid_bucuresti_league_table', 'league_name')
+              }}
+              |   | # | Echipa | M | G | P | Formă |
+              |:---:|:---:|:---|:---:|:---:|:---:|:---:|
+              {% for entry in state_attr('sensor.rapid_bucuresti_league_table',
+              'table') | default([]) -%}
+              {%- set rank_num = entry.rank | int -%}
+              {%- set icon = '🟦' if rank_num <= 6 else '🟨' -%}
+              | {{ icon }} | {{ entry.rank }} | <img
+              src="https://images.fotmob.com/image_resources/logo/teamlogo/{{
+              entry.team_id }}.png" width="20"> {{ '**' if entry.is_current }}{{
+              entry.team }}{{ '**' if entry.is_current }} | {{ entry.played }} |
+              {{ entry.gd }} | **{{ entry.pts }}** | {% if entry.form is defined
+              %}{% for res in entry.form %}{%- set c = '#4CAF50' if res == 'W'
+              else ('#FF9800' if res == 'D' else '#F44336') -%}<span
+              style="background-color:{{c}};color:white;padding:1px
+              3px;border-radius:3px;font-size:0.8em;font-weight:bold;">{{'V' if
+              res == 'W' else ('E' if res == 'D' else 'I')}}</span> {% endfor
+              %}{% endif %} |
+              {% endfor %}
+              **Legendă:** 🟦 Play-Off (1-6) &nbsp; 🟨 Play-Out (7-16)
+    type: sections
+    max_columns: 2
+    cards: []
+```
+
 ## Credits
 
 Data provided by [FotMob](https://www.fotmob.com/).
