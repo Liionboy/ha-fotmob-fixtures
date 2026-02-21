@@ -148,8 +148,7 @@ class FotMobMatchSensor(FotMobBaseSensor):
             "home_away": "Home" if is_home else "Away",
             "league": match.get('league', {}).get('name'),
             "match": f"{match.get('home', {}).get('name')} vs {match.get('away', {}).get('name')}",
-            "timestamp": status.get('utcTime'),
-            "local_time": localize_time(status.get('utcTime')),
+            "timestamp": localize_time(status.get('utcTime')),
             "status": "Live" if (status.get('started') and not status.get('finished')) else "Scheduled",
             "score": status.get('scoreStr')
         }
@@ -523,7 +522,7 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
                 "pts": row.get("pts"),
                 "form": form_results,
                 "next_id": next_id,
-                "next_time": next_time,
+                "timestamp": next_time,
                 "color": row.get("qualColor") or row.get("color") or "", 
                 "deduction": row.get("deductionReason"),
                 "is_current": t_id == str(self._team_id)
