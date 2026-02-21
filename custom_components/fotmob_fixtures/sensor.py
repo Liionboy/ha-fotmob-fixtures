@@ -681,11 +681,12 @@ class FotMobCoachSensor(FotMobBaseSensor):
             return coach.get('name', 'N/A')
             
         # Fallback to squad iteration
-        squad = self.team_data.get('squad', [])
-        for member in squad:
-            if isinstance(member, list) and len(member) > 0 and str(member[0]).lower() == "coach":
-                if len(member) > 1 and isinstance(member[1], list) and len(member[1]) > 0:
-                    coach_name = member[1][0].get('name')
+        squad_list = self.team_data.get('squad', {}).get('squad', [])
+        for group in squad_list:
+            if isinstance(group, dict) and str(group.get('title', '')).lower() == "coach":
+                members = group.get('members', [])
+                if members and isinstance(members, list) and len(members) > 0:
+                    coach_name = members[0].get('name')
                     if coach_name:
                         return coach_name
 
@@ -702,11 +703,12 @@ class FotMobCoachSensor(FotMobBaseSensor):
             }
             
         # Fallback to squad iteration
-        squad = self.team_data.get('squad', [])
-        for member in squad:
-            if isinstance(member, list) and len(member) > 0 and str(member[0]).lower() == "coach":
-                if len(member) > 1 and isinstance(member[1], list) and len(member[1]) > 0:
-                    coach_dict = member[1][0]
+        squad_list = self.team_data.get('squad', {}).get('squad', [])
+        for group in squad_list:
+            if isinstance(group, dict) and str(group.get('title', '')).lower() == "coach":
+                members = group.get('members', [])
+                if members and isinstance(members, list) and len(members) > 0:
+                    coach_dict = members[0]
                     return {
                         "age": coach_dict.get('age', 'N/A'),
                         "country": coach_dict.get('countryName', 'N/A'),
