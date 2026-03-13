@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.7] - 2026-03-13
+
+### Fixed
+
+- **Match Sensor**: Fixed an issue where the opponent's `Rank`, `Form`, and `Difficulty` displayed as `N/A` for teams located in composite sub-leagues (e.g., Play-off/Play-out groups). The sensor now recursively searches all sub-league tables to correctly identify the opponent and extract their stats.
+
+
 ## [1.8.6] - 2026-03-13
 
 ### Added
