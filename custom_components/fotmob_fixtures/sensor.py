@@ -82,6 +82,33 @@ class FotMobBaseSensor(CoordinatorEntity, SensorEntity):
         """Return the logo of the tracked team."""
         return f"https://images.fotmob.com/image_resources/logo/teamlogo/{self._team_id}.png"
 
+    def _find_team_in_tables(self, tables):
+        """Helper to find team row and league name in various table structures."""
+        if not tables:
+            return None, None, None
+            
+        for container in tables:
+            # Check if this is from the team overview or league API
+            # Team overview has data in .data, League API has data directly or in .data
+            data = container.get('data') if 'data' in container else container
+            if not isinstance(data, dict):
+                continue
+
+            if data.get('composite'):
+                for sub_table in data.get('tables', []):
+                    league_name = sub_table.get('leagueName')
+                    rows = sub_table.get('table', {}).get('all', [])
+                    for row in rows:
+                        if str(row.get('id')) == str(self._team_id):
+                            return row, league_name, container
+            else:
+                league_name = data.get('leagueName')
+                rows = data.get('table', {}).get('all', [])
+                for row in rows:
+                    if str(row.get('id')) == str(self._team_id):
+                        return row, league_name, container
+        return None, None, None
+
 class FotMobMatchSensor(FotMobBaseSensor):
     """Sensor for the next or live match."""
 
@@ -207,10 +234,10 @@ class FotMobLeaguePositionSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        table = self.team_data.get('overview', {}).get('table', [{}])[0].get('data', {}).get('table', {}).get('all', [])
-        for entry in table:
-            if str(entry.get('id')) == str(self._team_id):
-                return entry.get('idx')
+        tables = self.team_data.get('overview', {}).get('table', [])
+        row, _, _ = self._find_team_in_tables(tables)
+        if row:
+            return row.get('idx')
         return None
 
     @property
@@ -227,10 +254,10 @@ class FotMobLeaguePointsSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        table = self.team_data.get('overview', {}).get('table', [{}])[0].get('data', {}).get('table', {}).get('all', [])
-        for entry in table:
-            if str(entry.get('id')) == str(self._team_id):
-                return entry.get('pts')
+        tables = self.team_data.get('overview', {}).get('table', [])
+        row, _, _ = self._find_team_in_tables(tables)
+        if row:
+            return row.get('pts')
         return None
 
     @property
@@ -311,11 +338,9 @@ class FotMobMatchesPlayedSensor(FotMobBaseSensor):
     @property
     def state(self):
         tables = self.team_data.get('overview', {}).get('table', [])
-        for table_container in tables:
-            rows = table_container.get('data', {}).get('table', {}).get('all', [])
-            for entry in rows:
-                if str(entry.get('id')) == str(self._team_id):
-                    return entry.get('played')
+        row, _, _ = self._find_team_in_tables(tables)
+        if row:
+            return row.get('played')
         return None
 
     @property
@@ -492,11 +517,9 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
     def state(self):
         # Search all tables in overview
         tables = self.team_data.get('overview', {}).get('table', [])
-        for table_container in tables:
-            rows = table_container.get('data', {}).get('table', {}).get('all', [])
-            for entry in rows:
-                if str(entry.get('id')) == str(self._team_id):
-                    return entry.get('idx')
+        row, _, _ = self._find_team_in_tables(tables)
+        if row:
+            return row.get('idx')
         return None
 
     @property
@@ -517,21 +540,36 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
         rows = []
         table_data_obj = {}
         matched_container = None
-        for table_container in tables:
-            t_data = table_container.get('data', {}).get('table', {})
-            current_rows = t_data.get('all', [])
-            if any(str(row.get('id')) == str(self._team_id) for row in current_rows):
-                league_info = table_container.get('data', {})
-                table_data_obj = t_data
-                rows = current_rows
-                matched_container = table_container
-                break
         
+        row, league_name, matched_container = self._find_team_in_tables(tables)
+        
+        if matched_container:
+            data = matched_container.get('data') if 'data' in matched_container else matched_container
+            if data.get('composite'):
+                # For composite, we need to find WHICH sub-table has our team
+                for sub in data.get('tables', []):
+                    if any(str(r.get('id')) == str(self._team_id) for r in sub.get('table', {}).get('all', [])):
+                        league_info = {"leagueName": sub.get('leagueName')}
+                        table_data_obj = sub.get('table', {})
+                        rows = table_data_obj.get('all', [])
+                        break
+            else:
+                league_info = data
+                table_data_obj = data.get('table', {})
+                rows = table_data_obj.get('all', [])
+
         if not rows and tables:
             matched_container = tables[0]
-            league_info = matched_container.get('data', {})
-            table_data_obj = league_info.get('table', {})
-            rows = table_data_obj.get('all', [])
+            data = matched_container.get('data') if 'data' in matched_container else matched_container
+            if data.get('composite') and data.get('tables'):
+                sub = data['tables'][0]
+                league_info = {"leagueName": sub.get('leagueName')}
+                table_data_obj = sub.get('table', {})
+                rows = table_data_obj.get('all', [])
+            else:
+                league_info = data
+                table_data_obj = league_info.get('table', {})
+                rows = table_data_obj.get('all', [])
         
         # High-Fidelity Merge: teamForm and nextOpponent are at table_container level
         # (sibling of 'data'), NOT inside data.table
