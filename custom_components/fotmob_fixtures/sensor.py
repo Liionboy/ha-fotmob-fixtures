@@ -180,33 +180,50 @@ class FotMobMatchSensor(FotMobBaseSensor):
 
         # Try to find opponent in league table
         tables = data.get('overview', {}).get('table', [])
-        for table_container in tables:
-            rows = table_container.get('data', {}).get('table', {}).get('all', [])
-            found_opponent = False
-            for row in rows:
-                if str(row.get('id')) == str(opponent_id):
-                    opponent_rank = row.get('idx')
+        row, _, container = self._find_team_in_tables(tables)
+        # We need to find the opponent, not the current team, so we use a custom search
+        # similar to _find_team_in_tables but for opponent_id
+        
+        found_opponent = False
+        if tables:
+            for c in tables:
+                c_data = c.get('data') if 'data' in c else c
+                if not isinstance(c_data, dict):
+                    continue
                     
-                    raw_form = table_container.get('teamForm', {}).get(str(opponent_id)) or row.get('form', [])
-                    if isinstance(raw_form, list):
-                        for f in raw_form:
-                            if isinstance(f, dict):
-                                opponent_form.append(f.get('resultString', f.get('result', '?')))
-                            elif isinstance(f, str):
-                                opponent_form.append(f)
-                    
-                    if isinstance(opponent_rank, int):
-                        if opponent_rank <= 4:
-                            difficulty = "High"
-                        elif opponent_rank <= 10:
-                            difficulty = "Medium"
-                        else:
-                            difficulty = "Low"
-                    
-                    found_opponent = True
-                    break
-            if found_opponent:
-                break
+                if c_data.get('composite'):
+                    for sub_table in c_data.get('tables', []):
+                        for r in sub_table.get('table', {}).get('all', []):
+                            if str(r.get('id')) == str(opponent_id):
+                                opponent_rank = r.get('idx')
+                                raw_form = c.get('teamForm', {}).get(str(opponent_id)) or r.get('form', [])
+                                found_opponent = True
+                                break
+                        if found_opponent: break
+                else:
+                    for r in c_data.get('table', {}).get('all', []):
+                        if str(r.get('id')) == str(opponent_id):
+                            opponent_rank = r.get('idx')
+                            raw_form = c.get('teamForm', {}).get(str(opponent_id)) or r.get('form', [])
+                            found_opponent = True
+                            break
+                if found_opponent: break
+
+        if found_opponent:
+            if isinstance(raw_form, list):
+                for f in raw_form:
+                    if isinstance(f, dict):
+                        opponent_form.append(f.get('resultString', f.get('result', '?')))
+                    elif isinstance(f, str):
+                        opponent_form.append(f)
+            
+            if isinstance(opponent_rank, int):
+                if opponent_rank <= 4:
+                    difficulty = "High"
+                elif opponent_rank <= 10:
+                    difficulty = "Medium"
+                else:
+                    difficulty = "Low"
 
         attributes = {
             "opponent": opponent,
