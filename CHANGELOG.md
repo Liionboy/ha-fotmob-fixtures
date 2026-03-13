@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.8] - 2026-03-13
+
+### Fixed
+
+- **Form Sensor Template Error**: Fixed an issue where `sensor._form` would return an empty `form_list` attribute for teams in composite leagues, resolving the Jinja `TypeError: 'NoneType' object is not iterable` error in dashboard cards.
+
+
 ## [1.8.7] - 2026-03-13
 
 ### Fixed

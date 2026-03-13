@@ -327,17 +327,14 @@ class FotMobTeamFormSensor(FotMobBaseSensor):
         if not tables:
             tables = self.team_data.get('overview', {}).get('table', [])
 
-        for table_container in tables:
-            team_form = table_container.get('teamForm', {})
+        row, _, container = self._find_team_in_tables(tables)
+        if row and container:
+            team_form = container.get('teamForm', {})
             form_entries = team_form.get(str(self._team_id), [])
-            
-            rows = table_container.get('data', {}).get('table', {}).get('all', [])
-            for entry in rows:
-                if str(entry.get('id')) == str(self._team_id):
-                    return {
-                        "form_list": form_entries or entry.get('form', []),
-                        "deduction": entry.get('deductionReason')
-                    }
+            return {
+                "form_list": form_entries or row.get('form', []),
+                "deduction": row.get('deductionReason')
+            }
         return {}
 
     @property
