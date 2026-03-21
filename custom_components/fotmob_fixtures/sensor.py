@@ -13,7 +13,7 @@ from .const import DOMAIN, CONF_TEAM_ID
 _LOGGER = logging.getLogger(__name__)
 
 def localize_time(utc_time_str):
-    """Convert UTC ISO string to local time HH:MM."""
+    """Convert UTC ISO string to local time DD/MM/YYYY HH:MM."""
     if not utc_time_str:
         return "N/A"
     try:
@@ -23,10 +23,14 @@ def localize_time(utc_time_str):
         
         utc_dt = dt_util.parse_datetime(utc_time_str)
         if utc_dt:
-            from datetime import timezone, timedelta
-            gmt2 = timezone(timedelta(hours=2))
-            local_dt = utc_dt.astimezone(gmt2)
-            return local_dt.strftime("%d/%m/%Y %H:%M GMT+2")
+            # Home Assistant's dt_util.as_local() respects the system timezone
+            local_dt = dt_util.as_local(utc_dt)
+            # Find timezone abbreviation or offset
+            tz_name = local_dt.strftime("%Z")
+            if not tz_name or tz_name.startswith("+") or tz_name.startswith("-"):
+                tz_name = f"GMT{local_dt.strftime('%z')[:3]}"
+            
+            return f"{local_dt.strftime('%d/%m/%Y %H:%M')} {tz_name}"
     except Exception:
         pass
     return "N/A"

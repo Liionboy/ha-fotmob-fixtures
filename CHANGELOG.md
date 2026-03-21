@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-03-21
+
+### Added
+
+- **Async Refactor**: Transitioned from `requests` to `aiohttp` using Home Assistant's `async_get_clientsession`. This prevents blocking the main event loop and improves overall system performance.
+- **Dynamic Timezone Handling**: Replaced hardcoded GMT+2 offsets with `dt_util.as_local()`. Match and fixture times now automatically adapt to the user's Home Assistant timezone settings and seasonal changes (Daylight Saving Time).
+- **Robust Error Handling**: Implemented comprehensive `try/except` blocks with detailed logging for API requests. Network errors and timeouts are now properly reported in the logs instead of causing silent failures.
+
+### Changed
+
+- Removed `requests` dependency from `manifest.json`.
+
 ## [1.8.9] - 2026-03-21
 
 ### Fixed

@@ -3,14 +3,12 @@
     "name": "FotMob Fixtures",
     "documentation": "https://github.com/Liionboy/ha-fotmob-fixtures",
     "issue_tracker": "https://github.com/Liionboy/ha-fotmob-fixtures/issues",
-    "requirements": [
-        "requests"
-    ],
+    "requirements": [],
     "dependencies": [],
     "codeowners": [
         "@Liionboy"
     ],
-    "version": "1.8.9",
+    "version": "1.9.0",
     "iot_class": "cloud_polling",
     "config_flow": true
 }
