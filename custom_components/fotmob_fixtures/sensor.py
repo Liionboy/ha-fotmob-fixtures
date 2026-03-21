@@ -179,7 +179,7 @@ class FotMobMatchSensor(FotMobBaseSensor):
         difficulty = "N/A"
 
         # Try to find opponent in league table
-        tables = data.get('overview', {}).get('table', [])
+        tables = data.get('table', [])
         row, _, container = self._find_team_in_tables(tables)
         # We need to find the opponent, not the current team, so we use a custom search
         # similar to _find_team_in_tables but for opponent_id
@@ -251,7 +251,7 @@ class FotMobLeaguePositionSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        tables = self.team_data.get('overview', {}).get('table', [])
+        tables = self.team_data.get('table', [])
         row, _, _ = self._find_team_in_tables(tables)
         if row:
             return row.get('idx')
@@ -271,7 +271,7 @@ class FotMobLeaguePointsSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        tables = self.team_data.get('overview', {}).get('table', [])
+        tables = self.team_data.get('table', [])
         row, _, _ = self._find_team_in_tables(tables)
         if row:
             return row.get('pts')
@@ -291,11 +291,10 @@ class FotMobTeamFormSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        # Try league_table first (full API), fallback to overview
-        league_data = self.team_data.get('league_table', {})
-        tables = league_data.get('table', [])
+        tables = self.team_data.get('table', [])
         if not tables:
-            tables = self.team_data.get('overview', {}).get('table', [])
+            league_data = self.team_data.get('league_table', {})
+            tables = league_data.get('table', [])
 
         for table_container in tables:
             # teamForm is at table_container level, NOT inside data.table
@@ -322,10 +321,10 @@ class FotMobTeamFormSensor(FotMobBaseSensor):
 
     @property
     def extra_state_attributes(self):
-        league_data = self.team_data.get('league_table', {})
-        tables = league_data.get('table', [])
+        tables = self.team_data.get('table', [])
         if not tables:
-            tables = self.team_data.get('overview', {}).get('table', [])
+            league_data = self.team_data.get('league_table', {})
+            tables = league_data.get('table', [])
 
         row, _, container = self._find_team_in_tables(tables)
         if row and container:
@@ -351,7 +350,7 @@ class FotMobMatchesPlayedSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        tables = self.team_data.get('overview', {}).get('table', [])
+        tables = self.team_data.get('table', [])
         row, _, _ = self._find_team_in_tables(tables)
         if row:
             return row.get('played')
@@ -530,7 +529,7 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
     @property
     def state(self):
         # Search all tables in overview
-        tables = self.team_data.get('overview', {}).get('table', [])
+        tables = self.team_data.get('table', [])
         row, _, _ = self._find_team_in_tables(tables)
         if row:
             return row.get('idx')
@@ -538,13 +537,13 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
 
     @property
     def extra_state_attributes(self):
-        # 1. Try to get data from the full league_table fetch first
-        league_data = self.team_data.get('league_table', {})
-        tables = league_data.get('table', [])
+        # 1. Try to get data from the Team API root first (supports scissioned/composite leagues)
+        tables = self.team_data.get('table', [])
         
-        # If league_table fetch failed or is missing, fallback to overview table
+        # 2. Fallback to full league_table fetch
         if not tables:
-            tables = self.team_data.get('overview', {}).get('table', [])
+            league_data = self.team_data.get('league_table', {})
+            tables = league_data.get('table', [])
             
         if not tables:
             return {"league_name": "N/A", "table": []}

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.9] - 2026-03-21
+
+### Fixed
+
+- **Critical API Fix**: Switched to the modern `/api/data/teams` endpoint to resolve the 404 errors caused by FotMob decommissioning the legacy endpoint.
+- **Support for Divided League Structures**: Significantly improved the handling of scissioned leagues (Play-off/Play-out) like the Romanian Superliga. The integration now correctly identifies Championship/Relegation groups and prioritizes them in the dashboard view.
+- **Data Robustness**: Improved parsing for top players and coach information to ensure sensors remain populated across all team types.
+
 ## [1.8.8] - 2026-03-13
 
 ### Fixed
