@@ -10,6 +10,11 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 _LOGGER = logging.getLogger(__name__)
 
+MAX_RETRIES = 3
+RETRY_DELAY = 5  # seconds between retries
+REQUEST_TIMEOUT = 30  # seconds per request
+
+
 class FotMobDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching FotMob data."""
 
@@ -20,34 +25,47 @@ class FotMobDataUpdateCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name=f"FotMob Team {team_id}",
-            update_interval=timedelta(minutes=1),
+            update_interval=timedelta(minutes=5),
         )
 
     async def _async_update_data(self):
-        """Fetch data from FotMob API."""
+        """Fetch data from FotMob API with retry logic."""
         session = async_get_clientsession(self.hass)
         base_url = f"https://www.fotmob.com/api/data/teams?id={self.team_id}"
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/json',
+            'Accept-Language': 'en-US,en;q=0.9',
         }
 
-        async def fetch_json(url):
-            try:
-                async with async_timeout.timeout(15):
-                    response = await session.get(url, headers=headers)
-                    if response.status != 200:
-                        _LOGGER.warning("Error fetching FotMob URL %s: %s", url, response.status)
+        async def fetch_json(url, retries=MAX_RETRIES):
+            """Fetch JSON with exponential retry on timeout/network errors."""
+            for attempt in range(1, retries + 1):
+                try:
+                    async with async_timeout.timeout(REQUEST_TIMEOUT):
+                        response = await session.get(url, headers=headers)
+                        if response.status == 429:
+                            wait = RETRY_DELAY * attempt * 2
+                            _LOGGER.warning("Rate limited on %s, waiting %ds (attempt %d/%d)", url, wait, attempt, retries)
+                            await asyncio.sleep(wait)
+                            continue
+                        if response.status != 200:
+                            _LOGGER.warning("Error fetching FotMob URL %s: HTTP %s", url, response.status)
+                            return {}
+                        return await response.json()
+                except (asyncio.TimeoutError, aiohttp.ClientError) as err:
+                    wait = RETRY_DELAY * attempt
+                    if attempt < retries:
+                        _LOGGER.warning("Fetch attempt %d/%d failed for %s: %s. Retrying in %ds...",
+                                        attempt, retries, url, err, wait)
+                        await asyncio.sleep(wait)
+                    else:
+                        _LOGGER.error("All %d attempts failed for %s: %s", retries, url, err)
                         return {}
-                    return await response.json()
-            except aiohttp.ClientError as err:
-                _LOGGER.error("Network error fetching FotMob URL %s: %s", url, err)
-                return {}
-            except asyncio.TimeoutError:
-                _LOGGER.error("Timeout fetching FotMob URL %s", url)
-                return {}
-            except Exception as e:
-                _LOGGER.error("Unexpected error fetching FotMob URL %s: %s", url, e)
-                return {}
+                except Exception as e:
+                    _LOGGER.error("Unexpected error fetching FotMob URL %s: %s", url, e)
+                    return {}
+            return {}
 
         try:
             # 1. Fetch overview first

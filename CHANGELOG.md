@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.1] - 2026-03-22
+
+### Fixed
+
+- **Timeout Fix**: Increased request timeout from 15s to 30s and added retry logic (3 attempts with exponential backoff) to handle intermittent network issues from Home Assistant instances.
+- **Rate Limit Handling**: Added HTTP 429 detection with automatic backoff to prevent being blocked by FotMob.
+- **Reduced Polling Frequency**: Changed update interval from 1 minute to 5 minutes to reduce API load and avoid rate limiting.
+- **Updated User-Agent**: Modernized Chrome User-Agent string to avoid potential blocking.
+
 ## [1.9.0] - 2026-03-21
 
 ### Added
