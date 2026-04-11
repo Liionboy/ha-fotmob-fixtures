@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.2] - 2026-04-11
+
+### Fixed
+
+- **Config Flow Validation**: Replaced deprecated `https://www.fotmob.com/api/teams?id=...` with `https://www.fotmob.com/api/data/teams?id=...` to prevent team validation failures.
+- **League Table Fetch**: Replaced deprecated `https://www.fotmob.com/api/leagues?id=...` with `https://www.fotmob.com/api/data/leagues?id=...` to restore full league table enrichment.
+- **Input Robustness**: Added validation guard for unexpected/non-dict API payloads during config validation.
+
 ## [1.9.1] - 2026-03-22
 
 ### Fixed

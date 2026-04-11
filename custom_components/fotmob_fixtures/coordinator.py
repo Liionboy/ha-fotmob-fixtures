@@ -90,9 +90,10 @@ class FotMobDataUpdateCoordinator(DataUpdateCoordinator):
             ]
             
             if league_id:
-                tasks.append(fetch_json(f"https://www.fotmob.com/api/leagues?id={league_id}"))
+                # Legacy /api/leagues returns 404; use /api/data/leagues
+                tasks.append(fetch_json(f"https://www.fotmob.com/api/data/leagues?id={league_id}"))
             else:
-                tasks.append(asyncio.sleep(0, result={})) # Placeholder
+                tasks.append(asyncio.sleep(0, result={}))  # Placeholder
 
             results = await asyncio.gather(*tasks)
             transfers = results[0]

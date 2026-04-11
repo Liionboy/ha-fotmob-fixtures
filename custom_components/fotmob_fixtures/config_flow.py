@@ -31,8 +31,8 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     if not team_id.isdigit():
          raise InvalidTeam
          
-    # Optional: Verify with FotMob API
-    url = f"https://www.fotmob.com/api/teams?id={team_id}"
+    # Optional: Verify with FotMob API (legacy /api/teams was removed)
+    url = f"https://www.fotmob.com/api/data/teams?id={team_id}"
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
     }
@@ -46,6 +46,9 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
             raise InvalidTeam
         
         team_data = response.json()
+        if not isinstance(team_data, dict):
+            raise InvalidTeam
+
         team_name = team_data.get('details', {}).get('name')
         if not team_name:
             raise InvalidTeam
