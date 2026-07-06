@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.5] - 2026-07-06
+
+### Fixed
+
+- **Generic Source Alignment**: Sensors now prefer the modern FotMob payload structure generically across teams: squad data for coach, venue data for stadium, and stats-tab data as a fallback for top scorer, top assist, and top rating.
+- **Stats Tab Merge**: The coordinator now fetches and merges `tab=stats`, improving top-player sensor reliability when `overview.topPlayers` is missing or incomplete.
+- **Payload Robustness**: Transfers and history sensors now defensively handle partial or missing dict payloads without relying on legacy shapes.
+
 ## [1.9.4] - 2026-07-06
 
 ### Fixed

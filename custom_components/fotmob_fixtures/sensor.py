@@ -132,6 +132,25 @@ class FotMobBaseSensor(CoordinatorEntity, SensorEntity):
                     return members[0]
         return {}
 
+    def _stats_detail(self):
+        """Return team stats tab payload as a mapping."""
+        return self._safe_mapping(self.team_data.get('stats_detail'))
+
+    def _top_player_from_overview(self, key):
+        """Return first top-player entry from overview payload."""
+        return self._overview().get('topPlayers', {}).get(key, {}).get('players', [])
+
+    def _top_player_from_stats(self, stat_name):
+        """Return top participant from the stats tab for a stat name."""
+        for item in self._stats_detail().get('players', []):
+            if not isinstance(item, dict):
+                continue
+            if item.get('name') == stat_name:
+                participant = self._safe_mapping(item.get('participant'))
+                if participant.get('name'):
+                    return participant
+        return {}
+
 class FotMobMatchSensor(FotMobBaseSensor):
     """Sensor for the next or live match."""
 
@@ -393,13 +412,14 @@ class FotMobTopScorerSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        # Prefer overview.topPlayers.byGoals, fallback to squad stats
-        players = self.team_data.get('topPlayers', {}).get('byGoals', {}).get('players', [])
-        if not players:
-             players = self.team_data.get('overview', {}).get('topPlayers', {}).get('byGoals', {}).get('players', [])
-        
+        players = self._top_player_from_overview('byGoals')
         if players:
             player = players[0]
+            name = player.get('name', 'N/A')
+            goals = player.get('stat', {}).get('value', player.get('value', player.get('rank', 0)))
+            return f"{name} ({goals} goals)"
+        player = self._top_player_from_stats('goals')
+        if player:
             name = player.get('name', 'N/A')
             goals = player.get('stat', {}).get('value', player.get('value', player.get('rank', 0)))
             return f"{name} ({goals} goals)"
@@ -419,12 +439,14 @@ class FotMobTopAssistSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        players = self.team_data.get('topPlayers', {}).get('byAssists', {}).get('players', [])
-        if not players:
-             players = self.team_data.get('overview', {}).get('topPlayers', {}).get('byAssists', {}).get('players', [])
-
+        players = self._top_player_from_overview('byAssists')
         if players:
             player = players[0]
+            name = player.get('name', 'N/A')
+            assists = player.get('stat', {}).get('value', player.get('value', player.get('rank', 0)))
+            return f"{name} ({assists} assists)"
+        player = self._top_player_from_stats('goal_assist')
+        if player:
             name = player.get('name', 'N/A')
             assists = player.get('stat', {}).get('value', player.get('value', player.get('rank', 0)))
             return f"{name} ({assists} assists)"
@@ -444,9 +466,14 @@ class FotMobTopRatingSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        players = self._overview().get('topPlayers', {}).get('byRating', {}).get('players', [])
+        players = self._top_player_from_overview('byRating')
         if players:
             player = players[0]
+            name = player.get('name', 'N/A')
+            rating = player.get('stat', {}).get('value', player.get('value', player.get('rank', '0.0')))
+            return f"{name} ({rating})"
+        player = self._top_player_from_stats('rating')
+        if player:
             name = player.get('name', 'N/A')
             rating = player.get('stat', {}).get('value', player.get('value', player.get('rank', '0.0')))
             return f"{name} ({rating})"
@@ -466,7 +493,7 @@ class FotMobTeamTransfersSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        transfers = self.team_data.get('transfers', {}).get('data', {})
+        transfers = self._safe_mapping(self.team_data.get('transfers')).get('data', {})
         players_in = transfers.get('Players in', [])
         if players_in:
             return players_in[0].get('name', 'N/A')
@@ -474,7 +501,7 @@ class FotMobTeamTransfersSensor(FotMobBaseSensor):
 
     @property
     def extra_state_attributes(self):
-        transfers = self.team_data.get('transfers', {}).get('data', {})
+        transfers = self._safe_mapping(self.team_data.get('transfers')).get('data', {})
         return {
             "players_in": transfers.get('Players in', []),
             "players_out": transfers.get('Players out', []),
@@ -495,7 +522,7 @@ class FotMobTeamHistorySensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        history = self.team_data.get('history', {})
+        history = self._safe_mapping(self.team_data.get('history'))
         trophies = history.get('trophyList', [])
         total = 0
         for t in trophies:
@@ -509,7 +536,7 @@ class FotMobTeamHistorySensor(FotMobBaseSensor):
 
     @property
     def extra_state_attributes(self):
-        history = self.team_data.get('history', {})
+        history = self._safe_mapping(self.team_data.get('history'))
         trophies = history.get('trophyList', [])
         
         flattened_trophies = []

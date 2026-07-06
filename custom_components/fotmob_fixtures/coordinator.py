@@ -83,12 +83,14 @@ class FotMobDataUpdateCoordinator(DataUpdateCoordinator):
             transfers_url = f"{base_url}&tab=transfers"
             history_url = f"{base_url}&tab=history"
             squad_url = f"{base_url}&tab=squad"
+            stats_url = f"{base_url}&tab=stats"
             
             # Fetch secondary data in parallel to be efficient
             tasks = [
                 fetch_json(transfers_url),
                 fetch_json(history_url),
                 fetch_json(squad_url),
+                fetch_json(stats_url),
             ]
             
             if league_id:
@@ -101,7 +103,8 @@ class FotMobDataUpdateCoordinator(DataUpdateCoordinator):
             transfers = results[0]
             history = results[1]
             squad = results[2]
-            league_data = results[3]
+            stats = results[3]
+            league_data = results[4]
 
             # Merge everything
             data = overview
@@ -111,6 +114,8 @@ class FotMobDataUpdateCoordinator(DataUpdateCoordinator):
                 data["history"] = history.get("history", {})
             if squad:
                 data["squad"] = squad.get("squad", {})
+            if stats:
+                data["stats_detail"] = stats.get("stats", {})
             if league_data:
                 data["league_table"] = league_data
 
