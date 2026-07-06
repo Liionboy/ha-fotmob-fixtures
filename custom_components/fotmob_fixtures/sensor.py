@@ -118,6 +118,20 @@ class FotMobBaseSensor(CoordinatorEntity, SensorEntity):
         """Return a dict-like payload or an empty mapping."""
         return value if isinstance(value, dict) else {}
 
+    def _overview(self):
+        """Return overview payload as a mapping."""
+        return self._safe_mapping(self.team_data.get('overview'))
+
+    def _squad_coach(self):
+        """Return coach data from the squad tab when available."""
+        squad = self._safe_mapping(self.team_data.get('squad')).get('squad', [])
+        for group in squad:
+            if isinstance(group, dict) and str(group.get('title', '')).lower() == "coach":
+                members = group.get('members', [])
+                if members and isinstance(members, list) and isinstance(members[0], dict):
+                    return members[0]
+        return {}
+
 class FotMobMatchSensor(FotMobBaseSensor):
     """Sensor for the next or live match."""
 
@@ -430,11 +444,11 @@ class FotMobTopRatingSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        players = self.team_data.get('overview', {}).get('topPlayers', {}).get('byRating', {}).get('players', [])
+        players = self._overview().get('topPlayers', {}).get('byRating', {}).get('players', [])
         if players:
             player = players[0]
             name = player.get('name', 'N/A')
-            rating = player.get('rank', '0.0')
+            rating = player.get('stat', {}).get('value', player.get('value', player.get('rank', '0.0')))
             return f"{name} ({rating})"
         return "N/A"
 
@@ -677,7 +691,10 @@ class FotMobStadiumSensor(FotMobBaseSensor):
     @property
     def state(self):
         details = self.team_data.get('details', {})
+        overview = self._overview()
         stadium = details.get('stadium')
+        if not stadium:
+            stadium = overview.get('venue', {}).get('widget', {}).get('name')
         if not stadium:
             stadium = details.get('sportsTeamJSONLD', {}).get('location', {}).get('name')
         if not stadium:
@@ -690,29 +707,43 @@ class FotMobStadiumSensor(FotMobBaseSensor):
     @property
     def extra_state_attributes(self):
         details = self.team_data.get('details', {})
+        overview = self._overview()
         location = details.get('sportsTeamJSONLD', {}).get('location', {})
         if not location:
             location = details.get('location', {})
-            
-        city = location.get('address', {}).get('addressLocality', 'N/A')
+
+        venue_widget = overview.get('venue', {}).get('widget', {})
+        city = location.get('address', {}).get('addressLocality') or venue_widget.get('city', 'N/A')
         country = location.get('address', {}).get('addressCountry', 'N/A')
         
         capacity = "N/A"
-        faq = details.get('faqJSONLD', {}).get('mainEntity', [])
-        for q in faq:
-            if 'capacity' in q.get('name', '').lower():
-                answer = q.get('acceptedAnswer', {}).get('text', '')
-                import re
-                match = re.search(r'\b\d{4,6}\b', answer)
-                if match:
-                    capacity = match.group(0)
+        for pair in venue_widget.get('statPairs', []):
+            if isinstance(pair, list) and len(pair) == 2 and str(pair[0]).lower() == 'capacity':
+                capacity = pair[1]
                 break
+        faq = details.get('faqJSONLD', {}).get('mainEntity', [])
+        if capacity == "N/A":
+            for q in faq:
+                if 'capacity' in q.get('name', '').lower():
+                    answer = q.get('acceptedAnswer', {}).get('text', '')
+                    import re
+                    match = re.search(r'\b\d{4,6}\b', answer)
+                    if match:
+                        capacity = match.group(0)
+                    break
+
+        lat = location.get('geo', {}).get('latitude')
+        lon = location.get('geo', {}).get('longitude')
+        widget_location = venue_widget.get('location', [])
+        if (lat is None or lon is None) and isinstance(widget_location, list) and len(widget_location) >= 2:
+            lat = lat if lat is not None else widget_location[0]
+            lon = lon if lon is not None else widget_location[1]
 
         return {
             "city": city,
             "country": country,
-            "lat": location.get('geo', {}).get('latitude'),
-            "lon": location.get('geo', {}).get('longitude'),
+            "lat": lat,
+            "lon": lon,
             "capacity": capacity
         }
 
@@ -730,54 +761,30 @@ class FotMobCoachSensor(FotMobBaseSensor):
 
     @property
     def state(self):
-        coach = self.team_data.get('coach', {})
+        coach = self._squad_coach() or self.team_data.get('coach', {})
         if not coach or (isinstance(coach, list) and len(coach) == 0):
-            coach = self.team_data.get('overview', {}).get('lastLineupStats', {}).get('coach', {})
-            
-        if isinstance(coach, list) and len(coach) > 0 and isinstance(coach[0], list):
-            for group in coach:
-                if isinstance(group, list) and len(group) == 2 and group[0] == 'Coach':
-                    if isinstance(group[1], list) and len(group[1]) > 0:
-                        return group[1][0].get('name', 'N/A')
+            coach = self._overview().get('lastLineupStats', {}).get('coach', {})
+        if not coach:
+            coach = self._overview().get('coach', {})
 
         if isinstance(coach, dict) and coach.get('name'):
             return coach.get('name', 'N/A')
-            
-        # Fallback to squad iteration
-        squad_list = self.team_data.get('squad', {}).get('squad', [])
-        for group in squad_list:
-            if isinstance(group, dict) and str(group.get('title', '')).lower() == "coach":
-                members = group.get('members', [])
-                if members and isinstance(members, list) and len(members) > 0:
-                    coach_name = members[0].get('name')
-                    if coach_name:
-                        return coach_name
 
         return "N/A"
 
     @property
     def extra_state_attributes(self):
-        coach = self.team_data.get('coach', {})
+        coach = self._squad_coach() or self.team_data.get('coach', {})
         if not coach or (isinstance(coach, list) and len(coach) == 0):
-            coach = self.team_data.get('overview', {}).get('lastLineupStats', {}).get('coach', {})
+            coach = self._overview().get('lastLineupStats', {}).get('coach', {})
+        if not coach:
+            coach = self._overview().get('coach', {})
         
         if isinstance(coach, dict) and coach.get('name'):
             return {
                 "age": coach.get('age', 'N/A'),
-                "country": coach.get('countryName', 'N/A'),
+                "country": coach.get('countryName', coach.get('cname', 'N/A')),
             }
-            
-        # Fallback to squad iteration
-        squad_list = self.team_data.get('squad', {}).get('squad', [])
-        for group in squad_list:
-            if isinstance(group, dict) and str(group.get('title', '')).lower() == "coach":
-                members = group.get('members', [])
-                if members and isinstance(members, list) and len(members) > 0:
-                    coach_dict = members[0]
-                    return {
-                        "age": coach_dict.get('age', 'N/A'),
-                        "country": coach_dict.get('countryName', 'N/A'),
-                    }
                     
         return {
             "age": "N/A",

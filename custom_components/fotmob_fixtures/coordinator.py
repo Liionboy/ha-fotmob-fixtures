@@ -82,11 +82,13 @@ class FotMobDataUpdateCoordinator(DataUpdateCoordinator):
             # 3. Fetch secondary data in parallel
             transfers_url = f"{base_url}&tab=transfers"
             history_url = f"{base_url}&tab=history"
+            squad_url = f"{base_url}&tab=squad"
             
             # Fetch secondary data in parallel to be efficient
             tasks = [
                 fetch_json(transfers_url),
-                fetch_json(history_url)
+                fetch_json(history_url),
+                fetch_json(squad_url),
             ]
             
             if league_id:
@@ -98,7 +100,8 @@ class FotMobDataUpdateCoordinator(DataUpdateCoordinator):
             results = await asyncio.gather(*tasks)
             transfers = results[0]
             history = results[1]
-            league_data = results[2]
+            squad = results[2]
+            league_data = results[3]
 
             # Merge everything
             data = overview
@@ -106,6 +109,8 @@ class FotMobDataUpdateCoordinator(DataUpdateCoordinator):
                 data["transfers"] = transfers.get("transfers", {})
             if history:
                 data["history"] = history.get("history", {})
+            if squad:
+                data["squad"] = squad.get("squad", {})
             if league_data:
                 data["league_table"] = league_data
 

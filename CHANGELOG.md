@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.4] - 2026-07-06
+
+### Fixed
+
+- **Coach Source Priority**: The coach sensor now prefers FotMob's `tab=squad` coach entry, matching the official squad page for teams like Rapid Bucuresti where the overview payload reports a different coach.
+- **Squad Data Fetch**: The coordinator now fetches and merges the `tab=squad` payload so coach details remain available without relying on stale overview metadata.
+
 ## [1.9.3] - 2026-07-06
 
 ### Fixed
