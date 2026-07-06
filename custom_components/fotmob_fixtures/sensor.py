@@ -113,6 +113,11 @@ class FotMobBaseSensor(CoordinatorEntity, SensorEntity):
                         return row, league_name, container
         return None, None, None
 
+    @staticmethod
+    def _safe_mapping(value):
+        """Return a dict-like payload or an empty mapping."""
+        return value if isinstance(value, dict) else {}
+
 class FotMobMatchSensor(FotMobBaseSensor):
     """Sensor for the next or live match."""
 
@@ -200,7 +205,7 @@ class FotMobMatchSensor(FotMobBaseSensor):
                         for r in sub_table.get('table', {}).get('all', []):
                             if str(r.get('id')) == str(opponent_id):
                                 opponent_rank = r.get('idx')
-                                raw_form = c.get('teamForm', {}).get(str(opponent_id)) or r.get('form', [])
+                                raw_form = self._safe_mapping(c.get('teamForm')).get(str(opponent_id)) or r.get('form', [])
                                 found_opponent = True
                                 break
                         if found_opponent: break
@@ -208,7 +213,7 @@ class FotMobMatchSensor(FotMobBaseSensor):
                     for r in c_data.get('table', {}).get('all', []):
                         if str(r.get('id')) == str(opponent_id):
                             opponent_rank = r.get('idx')
-                            raw_form = c.get('teamForm', {}).get(str(opponent_id)) or r.get('form', [])
+                            raw_form = self._safe_mapping(c.get('teamForm')).get(str(opponent_id)) or r.get('form', [])
                             found_opponent = True
                             break
                 if found_opponent: break
@@ -302,7 +307,7 @@ class FotMobTeamFormSensor(FotMobBaseSensor):
 
         for table_container in tables:
             # teamForm is at table_container level, NOT inside data.table
-            team_form = table_container.get('teamForm', {})
+            team_form = self._safe_mapping(table_container.get('teamForm'))
             form_entries = team_form.get(str(self._team_id), [])
             
             if form_entries:
@@ -332,7 +337,7 @@ class FotMobTeamFormSensor(FotMobBaseSensor):
 
         row, _, container = self._find_team_in_tables(tables)
         if row and container:
-            team_form = container.get('teamForm', {})
+            team_form = self._safe_mapping(container.get('teamForm'))
             form_entries = team_form.get(str(self._team_id), [])
             return {
                 "form_list": form_entries or row.get('form', []),
@@ -591,14 +596,14 @@ class FotMobLeagueTableSensor(FotMobBaseSensor):
         # High-Fidelity Merge: teamForm and nextOpponent are at table_container level
         # (sibling of 'data'), NOT inside data.table
         team_form_map = {}
-        team_form_obj = matched_container.get('teamForm', {}) if matched_container else {}
+        team_form_obj = self._safe_mapping(matched_container.get('teamForm')) if matched_container else {}
         for t_id, entries in team_form_obj.items():
             team_form_map[str(t_id)] = entries
             
         next_map = {}
-        next_obj = matched_container.get('nextOpponent', {}) if matched_container else {}
+        next_obj = self._safe_mapping(matched_container.get('nextOpponent')) if matched_container else {}
         if not isinstance(next_obj, dict):
-            next_obj = table_data_obj.get('nextOpponent', {})
+            next_obj = self._safe_mapping(table_data_obj.get('nextOpponent'))
         if isinstance(next_obj, dict):
             for t_id, data in next_obj.items():
                 if isinstance(data, list) and len(data) >= 3:
