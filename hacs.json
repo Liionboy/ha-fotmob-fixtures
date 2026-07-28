@@ -1,11 +1,12 @@
 {
-    "name": "FotMob Fixtures",
-    "render_readme": true,
-    "country": [
-        "RO",
-        "GB",
-        "DE",
-        "ES",
-        "IT"
-    ]
+  "name": "FotMob Fixtures",
+  "render_readme": true,
+  "country": [
+    "RO",
+    "GB",
+    "DE",
+    "ES",
+    "IT"
+  ],
+  "homeassistant": "2024.1.0"
 }
