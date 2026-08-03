@@ -1,0 +1,74 @@
+# FotMob dashboard lab — Mushroom variant
+# Requirement: Mushroom cards installed through HACS.
+# Replace the three sensor.your_team_* entity IDs if needed.
+
+type: vertical-stack
+cards:
+  - type: custom:mushroom-template-card
+    entity: sensor.your_team_form
+    primary: Last five matches
+    secondary: >-
+      {% set form = states(entity).split('-') %}
+      {% for result in form %}
+        {{ '🟢 W' if result == 'W' else ('🟡 D' if result == 'D' else ('🔴 L' if result == 'L' else '⚪ ?')) }}{{ '  ·  ' if not loop.last else '' }}
+      {% endfor %}
+    icon: mdi:chart-timeline-variant-shimmer
+    color: >-
+      {% set latest = states(entity).split('-') | last %}
+      {{ 'green' if latest == 'W' else ('amber' if latest == 'D' else ('red' if latest == 'L' else 'disabled')) }}
+    multiline_secondary: true
+    tap_action:
+      action: more-info
+
+  - type: markdown
+    entity_id: sensor.your_team_form
+    content: |
+      {% set games = state_attr('sensor.your_team_form', 'form_list') | default([], true) %}
+      {% if games | count == 0 %}
+      _No recent matches are available._
+      {% else %}
+      {% for game in games[-5:] %}
+        {% set home = game.get('home', {}) %}
+        {% set away = game.get('away', {}) %}
+        {% set is_home = home.get('isOurTeam', false) %}
+        {% set opponent = away.get('name', 'Unknown') if is_home else home.get('name', 'Unknown') %}
+        {% set result = game.get('resultString', game.get('result', '?')) %}
+      **{{ 'W' if result == 'W' else ('D' if result == 'D' else ('L' if result == 'L' else '?')) }}** &nbsp; {{ 'Home' if is_home else 'Away' }} vs **{{ opponent }}** · `{{ game.get('score', '—') }}`<br>
+      {% endfor %}
+      {% endif %}
+
+  - type: grid
+    columns: 2
+    square: false
+    cards:
+      - type: custom:mushroom-template-card
+        entity: sensor.your_team_top_scorer
+        primary: >-
+          {% set value = states(entity) %}
+          {{ value.rsplit(' (', 1)[0] if ' (' in value else value }}
+        secondary: >-
+          {% set value = states(entity) %}
+          {{ value.rsplit(' (', 1)[1].rstrip(')') if ' (' in value else 'Top scorer' }}
+        icon: mdi:soccer
+        color: amber
+        badge_icon: mdi:crown
+        badge_color: amber
+        vertical: true
+        tap_action:
+          action: more-info
+
+      - type: custom:mushroom-template-card
+        entity: sensor.your_team_top_assist
+        primary: >-
+          {% set value = states(entity) %}
+          {{ value.rsplit(' (', 1)[0] if ' (' in value else value }}
+        secondary: >-
+          {% set value = states(entity) %}
+          {{ value.rsplit(' (', 1)[1].rstrip(')') if ' (' in value else 'Top assists' }}
+        icon: mdi:shoe-cleat
+        color: cyan
+        badge_icon: mdi:handshake
+        badge_color: cyan
+        vertical: true
+        tap_action:
+          action: more-info

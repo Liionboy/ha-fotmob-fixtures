@@ -1,0 +1,52 @@
+# FotMob dashboard lab — native Home Assistant cards only
+# Replace the three sensor.your_team_* entity IDs if your team uses
+# different entity IDs. Paste the whole file into a Manual card.
+
+type: vertical-stack
+cards:
+  - type: markdown
+    title: Recent form
+    entity_id: sensor.your_team_form
+    content: |
+      {% set games = state_attr('sensor.your_team_form', 'form_list') | default([], true) %}
+      {% if games | count == 0 %}
+      No recent matches are available.
+      {% else %}
+      <table role="presentation" width="100%">
+      {% for game in games[-5:] %}
+        {% set home = game.get('home', {}) %}
+        {% set away = game.get('away', {}) %}
+        {% set is_home = home.get('isOurTeam', false) %}
+        {% set opponent = away.get('name', 'Unknown') if is_home else home.get('name', 'Unknown') %}
+        {% set result = game.get('resultString', game.get('result', '?')) %}
+        <tr>
+          <td width="40"><strong>{{ '🟢 W' if result == 'W' else ('🟡 D' if result == 'D' else ('🔴 L' if result == 'L' else '⚪ ?')) }}</strong></td>
+          <td>{{ opponent }}</td>
+          <td width="70" align="center"><strong>{{ game.get('score', '—') }}</strong></td>
+          <td width="32" align="right" title="{{ 'Home' if is_home else 'Away' }}">{{ '🏠' if is_home else '✈️' }}</td>
+        </tr>
+      {% endfor %}
+      </table>
+      {% endif %}
+
+  - type: grid
+    columns: 2
+    square: false
+    cards:
+      - type: tile
+        entity: sensor.your_team_top_scorer
+        name: Top scorer
+        icon: mdi:soccer
+        color: amber
+        vertical: true
+        tap_action:
+          action: more-info
+
+      - type: tile
+        entity: sensor.your_team_top_assist
+        name: Top assists
+        icon: mdi:shoe-cleat
+        color: cyan
+        vertical: true
+        tap_action:
+          action: more-info

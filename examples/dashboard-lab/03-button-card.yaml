@@ -1,0 +1,160 @@
+# FotMob dashboard lab — polished Button Card variant
+# Requirement: custom:button-card installed through HACS.
+# Replace the three sensor.your_team_* entity IDs if needed.
+
+type: vertical-stack
+cards:
+  - type: custom:button-card
+    entity: sensor.your_team_form
+    show_name: false
+    show_icon: false
+    show_state: false
+    custom_fields:
+      title: |
+        [[[
+          return `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+              <div>
+                <div style="font-size:18px;font-weight:700;">Recent form</div>
+                <div style="margin-top:2px;color:var(--secondary-text-color);font-size:12px;">Last five matches</div>
+              </div>
+              <ha-icon icon="mdi:chart-timeline-variant-shimmer" style="color:var(--primary-color);"></ha-icon>
+            </div>`;
+        ]]]
+      summary: |
+        [[[
+          const values = String(entity?.state ?? '').split('-').filter(Boolean);
+          if (!values.length || entity?.state === 'N/A') return '';
+          const colors = { W: '#22c55e', D: '#f59e0b', L: '#ef4444' };
+          return `<div style="display:flex;gap:7px;margin:16px 0 14px;">
+            ${values.slice(-5).map((value) => `
+              <span style="display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:${colors[value] ?? '#64748b'};color:white;font-size:13px;font-weight:800;box-shadow:0 4px 12px ${colors[value] ?? '#64748b'}44;">${value}</span>
+            `).join('')}
+          </div>`;
+        ]]]
+      matches: |
+        [[[
+          const games = Array.isArray(entity?.attributes?.form_list)
+            ? entity.attributes.form_list.slice(-5)
+            : [];
+
+          if (!games.length) {
+            return `<div style="padding:14px 0;color:var(--secondary-text-color);">No recent matches are available.</div>`;
+          }
+
+          const colors = { W: '#22c55e', D: '#f59e0b', L: '#ef4444' };
+          return games.map((game) => {
+            const home = game?.home ?? {};
+            const away = game?.away ?? {};
+            const isHome = Boolean(home.isOurTeam);
+            const opponent = (isHome ? away.name : home.name) ?? 'Unknown';
+            const result = game?.resultString ?? game?.result ?? '?';
+            const score = game?.score ?? '—';
+            const venue = isHome ? 'H' : 'A';
+            const color = colors[result] ?? '#64748b';
+
+            return `
+              <div style="display:grid;grid-template-columns:28px 26px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--divider-color);">
+                <span style="display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:${color}22;color:${color};font-size:12px;font-weight:800;">${result}</span>
+                <span style="color:var(--secondary-text-color);font-size:12px;font-weight:700;">${venue}</span>
+                <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;font-weight:600;">${opponent}</span>
+                <span style="font-variant-numeric:tabular-nums;font-size:15px;font-weight:800;">${score}</span>
+              </div>`;
+          }).join('');
+        ]]]
+    styles:
+      card:
+        - padding: 18px
+        - border-radius: 20px
+        - text-align: left
+      grid:
+        - grid-template-areas: '"title" "summary" "matches"'
+        - grid-template-columns: 1fr
+        - grid-template-rows: min-content min-content 1fr
+      custom_fields:
+        title:
+          - width: 100%
+        summary:
+          - width: 100%
+        matches:
+          - width: 100%
+
+  - type: grid
+    columns: 2
+    square: false
+    cards:
+      - type: custom:button-card
+        entity: sensor.your_team_top_scorer
+        name: Top scorer
+        icon: mdi:soccer
+        show_state: false
+        custom_fields:
+          player: |
+            [[[
+              const value = String(entity?.state ?? 'N/A');
+              const splitAt = value.lastIndexOf(' (');
+              const player = splitAt > 0 ? value.slice(0, splitAt) : value;
+              const stat = splitAt > 0 ? value.slice(splitAt + 2, -1) : 'Goals';
+              return `<div style="margin-top:4px;line-height:1.25;">
+                <div style="font-size:15px;font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${player}</div>
+                <div style="margin-top:3px;color:#f59e0b;font-size:12px;font-weight:700;text-transform:uppercase;">${stat}</div>
+              </div>`;
+            ]]]
+        styles:
+          card:
+            - padding: 16px
+            - border-radius: 20px
+          grid:
+            - grid-template-areas: '"i n" "i player"'
+            - grid-template-columns: 46px minmax(0, 1fr)
+            - grid-template-rows: min-content min-content
+          icon:
+            - color: '#f59e0b'
+            - width: 30px
+          name:
+            - justify-self: start
+            - color: var(--secondary-text-color)
+            - font-size: 12px
+          custom_fields:
+            player:
+              - min-width: 0
+              - justify-self: stretch
+              - text-align: left
+
+      - type: custom:button-card
+        entity: sensor.your_team_top_assist
+        name: Top assists
+        icon: mdi:shoe-cleat
+        show_state: false
+        custom_fields:
+          player: |
+            [[[
+              const value = String(entity?.state ?? 'N/A');
+              const splitAt = value.lastIndexOf(' (');
+              const player = splitAt > 0 ? value.slice(0, splitAt) : value;
+              const stat = splitAt > 0 ? value.slice(splitAt + 2, -1) : 'Assists';
+              return `<div style="margin-top:4px;line-height:1.25;">
+                <div style="font-size:15px;font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${player}</div>
+                <div style="margin-top:3px;color:#06b6d4;font-size:12px;font-weight:700;text-transform:uppercase;">${stat}</div>
+              </div>`;
+            ]]]
+        styles:
+          card:
+            - padding: 16px
+            - border-radius: 20px
+          grid:
+            - grid-template-areas: '"i n" "i player"'
+            - grid-template-columns: 46px minmax(0, 1fr)
+            - grid-template-rows: min-content min-content
+          icon:
+            - color: '#06b6d4'
+            - width: 30px
+          name:
+            - justify-self: start
+            - color: var(--secondary-text-color)
+            - font-size: 12px
+          custom_fields:
+            player:
+              - min-width: 0
+              - justify-self: stretch
+              - text-align: left

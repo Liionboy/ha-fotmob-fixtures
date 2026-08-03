@@ -1,0 +1,323 @@
+# Complete generic FotMob view for Home Assistant.
+# This is a single Lovelace view, not a complete dashboard root.
+
+title: FotMob Complete
+path: fotmob-complete
+icon: mdi:shield-star
+type: sections
+max_columns: 3
+badges:
+  - type: entity
+    entity: sensor.your_team_position
+    name: Loc
+    show_name: true
+    show_state: true
+    color: purple
+  - type: entity
+    entity: sensor.your_team_points
+    name: Puncte
+    show_name: true
+    show_state: true
+    color: amber
+  - type: entity
+    entity: sensor.your_team_form
+    name: Formă
+    show_name: true
+    show_state: true
+    color: green
+
+sections:
+  - type: grid
+    background:
+      color: "#6d28d9"
+      opacity: 8
+    cards:
+      - type: heading
+        heading: Următorul meci
+        heading_style: title
+        icon: mdi:soccer
+
+      - type: markdown
+        entity_id:
+          - sensor.your_team_match
+        content: |
+          {% set entity = 'sensor.your_team_match' %}
+          {% set opponent = state_attr(entity, 'opponent') | default('Adversar necunoscut', true) %}
+          {% set is_home = state_attr(entity, 'home_away') == 'Home' %}
+          {% set team_logo = state_attr(entity, 'entity_picture') %}
+          {% set team_name = state_attr(entity, 'friendly_name') | default('FotMob Team', true) | replace(' Match', '') %}
+          {% set opponent_logo = state_attr(entity, 'opponent_logo') %}
+          {% set score = state_attr(entity, 'score') %}
+          {% set status = state_attr(entity, 'status') | default('Scheduled', true) %}
+          {% set home_name = team_name if is_home else opponent %}
+          {% set away_name = opponent if is_home else team_name %}
+          {% set home_logo = team_logo if is_home else opponent_logo %}
+          {% set away_logo = opponent_logo if is_home else team_logo %}
+
+          <div align="center">
+            <small>{{ state_attr(entity, 'league') | default('Următorul meci', true) }} · {{ 'LIVE' if status == 'Live' else 'PROGRAMAT' }}</small>
+          </div>
+
+          <table role="presentation" width="100%">
+            <tr>
+              <td width="38%" align="center">
+                <img src="{{ home_logo }}" width="72" height="72"><br>
+                <strong>{{ home_name }}</strong><br><small>ACASĂ</small>
+              </td>
+              <td width="24%" align="center">
+                {% if score %}<strong style="font-size:1.8em">{{ score }}</strong>{% else %}<strong style="font-size:1.35em">VS</strong>{% endif %}<br>
+                <small>{{ state_attr(entity, 'timestamp') | default('Ora indisponibilă', true) }}</small>
+              </td>
+              <td width="38%" align="center">
+                <img src="{{ away_logo }}" width="72" height="72"><br>
+                <strong>{{ away_name }}</strong><br><small>DEPLASARE</small>
+              </td>
+            </tr>
+          </table>
+
+          ---
+
+          **Adversar:** locul {{ state_attr(entity, 'opponent_rank') | default('—', true) }} ·
+          **Dificultate:** {{ state_attr(entity, 'difficulty') | default('—', true) }}<br>
+          **Formă adversar:**
+          {% for result in state_attr(entity, 'opponent_form') | default([], true) %}
+            {% set color = '#22c55e' if result == 'W' else ('#f59e0b' if result == 'D' else '#ef4444') %}
+            <span style="display:inline-block;background:{{ color }};color:white;padding:2px 7px;border-radius:10px;font-weight:700">{{ result }}</span>
+          {% else %}
+            —
+          {% endfor %}
+        grid_options:
+          columns: full
+          rows: auto
+
+      - type: tile
+        entity: sensor.your_team_position
+        name: Loc
+        icon: mdi:podium
+        color: purple
+        vertical: true
+        grid_options:
+          columns: 4
+          rows: 2
+
+      - type: tile
+        entity: sensor.your_team_points
+        name: Puncte
+        icon: mdi:star-four-points
+        color: amber
+        vertical: true
+        grid_options:
+          columns: 4
+          rows: 2
+
+      - type: tile
+        entity: sensor.your_team_played
+        name: Meciuri
+        icon: mdi:calendar-check
+        color: blue
+        vertical: true
+        grid_options:
+          columns: 4
+          rows: 2
+
+  - type: grid
+    background:
+      color: "#16a34a"
+      opacity: 6
+    cards:
+      - type: heading
+        heading: Formă și lideri
+        heading_style: title
+        icon: mdi:chart-timeline-variant-shimmer
+
+      - type: markdown
+        entity_id:
+          - sensor.your_team_form
+        content: |
+          {% set games = state_attr('sensor.your_team_form', 'form_list') | default([], true) %}
+          {% if games | count == 0 %}
+          _Nu există încă meciuri recente._
+          {% else %}
+          <table role="presentation" width="100%">
+          {% for game in games[-5:] %}
+            {% set home = game.get('home', {}) %}
+            {% set away = game.get('away', {}) %}
+            {% set is_home = home.get('isOurTeam', false) %}
+            {% set opponent = away.get('name', 'Necunoscut') if is_home else home.get('name', 'Necunoscut') %}
+            {% set result = game.get('resultString', game.get('result', '?')) %}
+            {% set color = '#22c55e' if result == 'W' else ('#f59e0b' if result == 'D' else ('#ef4444' if result == 'L' else '#64748b')) %}
+            <tr>
+              <td width="34"><span style="display:inline-block;background:{{ color }};color:white;padding:3px 8px;border-radius:9px;font-weight:800">{{ result }}</span></td>
+              <td width="34"><img src="{{ game.get('imageUrl', '') }}" width="26" height="26"></td>
+              <td><strong>{{ opponent }}</strong><br><small>{{ 'Acasă' if is_home else 'Deplasare' }}</small></td>
+              <td width="70" align="right"><strong>{{ game.get('score', '—') }}</strong></td>
+            </tr>
+          {% endfor %}
+          </table>
+          {% endif %}
+        grid_options:
+          columns: full
+          rows: auto
+
+      - type: tile
+        entity: sensor.your_team_top_scorer
+        name: Golgheter
+        icon: mdi:soccer
+        color: amber
+        vertical: true
+        grid_options:
+          columns: 4
+          rows: 2
+
+      - type: tile
+        entity: sensor.your_team_top_assist
+        name: Pase decisive
+        icon: mdi:shoe-cleat
+        color: cyan
+        vertical: true
+        grid_options:
+          columns: 4
+          rows: 2
+
+      - type: tile
+        entity: sensor.your_team_top_rating
+        name: Cel mai bun rating
+        icon: mdi:star-circle
+        color: yellow
+        vertical: true
+        grid_options:
+          columns: 4
+          rows: 2
+
+  - type: grid
+    column_span: 2
+    background:
+      color: "#2563eb"
+      opacity: 5
+    cards:
+      - type: heading
+        heading: Clasament
+        heading_style: title
+        icon: mdi:format-list-numbered
+
+      - type: markdown
+        entity_id:
+          - sensor.your_team_league_table
+        content: |
+          {% set table = state_attr('sensor.your_team_league_table', 'table') | default([], true) %}
+          {% if table | count == 0 %}
+          _Clasamentul nu este disponibil momentan._
+          {% else %}
+          | # | Echipa | M | V | E | Î | G | +/- | Pct | Formă |
+          |:--:|:--|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--|
+          {% for entry in table %}
+          | **{{ entry.rank }}** | <img src="https://images.fotmob.com/image_resources/logo/teamlogo/{{ entry.team_id }}.png" width="20"> {{ '**' if entry.is_current else '' }}{{ entry.team }}{{ '**' if entry.is_current else '' }} | {{ entry.played }} | {{ entry.wins }} | {{ entry.draws }} | {{ entry.losses }} | {{ entry.goals }} | {{ entry.gd }} | **{{ entry.pts }}** | {% for result in entry.form | default([], true) %}{{ '🟢' if result == 'W' else ('🟡' if result == 'D' else '🔴') }}{% endfor %} |
+          {% endfor %}
+          {% endif %}
+        grid_options:
+          columns: full
+          rows: auto
+
+  - type: grid
+    background:
+      color: "#f59e0b"
+      opacity: 5
+    cards:
+      - type: heading
+        heading: Club
+        heading_style: title
+        icon: mdi:shield-star
+
+      - type: tile
+        entity: sensor.your_team_coach
+        name: Antrenor
+        icon: mdi:account-tie
+        color: purple
+        vertical: true
+        grid_options:
+          columns: 6
+          rows: 2
+
+      - type: tile
+        entity: sensor.your_team_stadium
+        name: Stadion
+        icon: mdi:stadium
+        color: green
+        vertical: true
+        grid_options:
+          columns: 6
+          rows: 2
+
+      - type: markdown
+        entity_id:
+          - sensor.your_team_stadium
+          - sensor.your_team_coach
+        content: |
+          **🏟️ {{ states('sensor.your_team_stadium') }}**<br>
+          📍 {{ state_attr('sensor.your_team_stadium', 'city') }}, {{ state_attr('sensor.your_team_stadium', 'country') }}<br>
+          👥 {{ state_attr('sensor.your_team_stadium', 'capacity') }} locuri
+
+          **👔 {{ states('sensor.your_team_coach') }}**<br>
+          {{ state_attr('sensor.your_team_coach', 'age') }} ani · {{ state_attr('sensor.your_team_coach', 'country') }}
+        grid_options:
+          columns: full
+          rows: auto
+
+      - type: heading
+        heading: Transferuri recente
+        heading_style: subtitle
+        icon: mdi:swap-horizontal-bold
+
+      - type: markdown
+        entity_id:
+          - sensor.your_team_transfers
+        content: |
+          {% set arrivals = state_attr('sensor.your_team_transfers', 'players_in') | default([], true) %}
+          {% set departures = state_attr('sensor.your_team_transfers', 'players_out') | default([], true) %}
+          **📥 Sosiri**
+
+          {% for player in arrivals[:5] %}
+            {% set position = player.get('position') %}
+            {% set fee = player.get('fee') or {} %}
+          - **{{ player.get('name', 'Necunoscut') }}** · {{ position.get('label', '—') if position else '—' }}<br>
+            de la {{ player.get('fromClub', '—') }} · {{ fee.get('feeText', '—') }}
+          {% else %}
+          - Nicio sosire disponibilă
+          {% endfor %}
+
+          **📤 Plecări**
+
+          {% for player in departures[:5] %}
+            {% set position = player.get('position') %}
+          - **{{ player.get('name', 'Necunoscut') }}** · {{ position.get('label', '—') if position else '—' }}<br>
+            la {{ player.get('toClub', '—') }}
+          {% else %}
+          - Nicio plecare disponibilă
+          {% endfor %}
+        grid_options:
+          columns: full
+          rows: auto
+
+      - type: heading
+        heading: Trofee
+        heading_style: subtitle
+        icon: mdi:trophy
+        badges:
+          - type: entity
+            entity: sensor.your_team_history
+            show_state: true
+
+      - type: markdown
+        entity_id:
+          - sensor.your_team_history
+        content: |
+          {% set trophies = state_attr('sensor.your_team_history', 'trophies') | default([], true) %}
+          {% for trophy in trophies %}
+          ### 🏆 {{ trophy.name }} · {{ trophy.count }}
+          {{ trophy.seasons }}
+          {% else %}
+          _Nu există informații despre trofee._
+          {% endfor %}
+        grid_options:
+          columns: full
+          rows: auto

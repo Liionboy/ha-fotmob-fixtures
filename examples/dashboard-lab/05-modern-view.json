@@ -1,0 +1,554 @@
+{
+  "title": "FotMob Modern",
+  "path": "fotmob",
+  "icon": "mdi:shield-star",
+  "type": "sections",
+  "max_columns": 3,
+  "sections": [
+    {
+      "type": "grid",
+      "column_span": 3,
+      "cards": [
+        {
+          "type": "custom:button-card",
+          "entity": "sensor.your_team_match",
+          "triggers_update": [
+            "sensor.your_team_position",
+            "sensor.your_team_points",
+            "sensor.your_team_played",
+            "sensor.your_team_form",
+            "sensor.your_team_league_table"
+          ],
+          "show_name": false,
+          "show_icon": false,
+          "show_state": false,
+          "custom_fields": {
+            "content": "[[[\nconst a = entity?.attributes ?? {};\nconst matchTeams = String(a.match ?? '').split(' vs ');\nconst isHome = a.home_away === 'Home';\nconst fallbackName = String(a.friendly_name ?? 'FotMob Team').replace(/\\s+Match$/, '');\nconst teamName = a.team_name || (matchTeams.length === 2 ? (isHome ? matchTeams[0] : matchTeams[1]) : fallbackName);\nconst leagueName = a.league || states['sensor.your_team_league_table']?.attributes?.league_name || 'League';\nconst logo = a.entity_picture ?? '';\nconst position = states['sensor.your_team_position']?.state ?? '—';\nconst points = states['sensor.your_team_points']?.state ?? '—';\nconst played = states['sensor.your_team_played']?.state ?? '—';\nconst form = String(states['sensor.your_team_form']?.state ?? '').split('-').filter(Boolean);\nconst colors = {W:'#34d399',D:'#fbbf24',L:'#fb7185'};\nconst chips = form.slice(-5).map(v => '<span style=\"display:grid;place-items:center;width:28px;height:28px;border-radius:10px;background:' + (colors[v] ?? '#64748b') + ';color:#fff;font-size:12px;font-weight:900;box-shadow:0 6px 16px rgba(15,23,42,.18);\">' + v + '</span>').join('');\nreturn '<div style=\"position:relative;isolation:isolate;min-height:230px;padding:28px;color:white;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:28px;\">' +\n  '<div style=\"position:absolute;z-index:-1;right:-70px;top:-100px;width:280px;height:280px;border-radius:50%;background:rgba(255,255,255,.10);\"></div>' +\n  '<div style=\"position:absolute;z-index:-1;left:35%;bottom:-130px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.07);\"></div>' +\n  '<div style=\"display:flex;align-items:center;gap:20px;min-width:260px;\">' +\n    '<div style=\"width:104px;height:104px;border-radius:28px;background:rgba(255,255,255,.95);display:grid;place-items:center;box-shadow:0 18px 40px rgba(15,23,42,.25);\"><img src=\"' + logo + '\" style=\"width:78px;height:78px;object-fit:contain;\"></div>' +\n    '<div><div style=\"font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;opacity:.75;\">' + leagueName + '</div><div style=\"margin-top:5px;font-size:clamp(26px,4vw,42px);font-weight:900;line-height:1;letter-spacing:-.04em;\">' + teamName + '</div><div style=\"margin-top:10px;font-size:13px;opacity:.78;\">FotMob live dashboard</div></div>' +\n  '</div>' +\n  '<div style=\"display:grid;grid-template-columns:repeat(3,minmax(78px,1fr));gap:10px;min-width:min(100%,330px);\">' +\n    '<div style=\"padding:14px;border-radius:18px;background:rgba(255,255,255,.12);backdrop-filter:blur(12px);\"><div style=\"font-size:11px;opacity:.72;text-transform:uppercase;letter-spacing:.08em;\">Loc</div><div style=\"margin-top:4px;font-size:28px;font-weight:900;\">#' + position + '</div></div>' +\n    '<div style=\"padding:14px;border-radius:18px;background:rgba(255,255,255,.12);backdrop-filter:blur(12px);\"><div style=\"font-size:11px;opacity:.72;text-transform:uppercase;letter-spacing:.08em;\">Puncte</div><div style=\"margin-top:4px;font-size:28px;font-weight:900;\">' + points + '</div></div>' +\n    '<div style=\"padding:14px;border-radius:18px;background:rgba(255,255,255,.12);backdrop-filter:blur(12px);\"><div style=\"font-size:11px;opacity:.72;text-transform:uppercase;letter-spacing:.08em;\">Meciuri</div><div style=\"margin-top:4px;font-size:28px;font-weight:900;\">' + played + '</div></div>' +\n    '<div style=\"grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;border-radius:18px;background:rgba(15,23,42,.18);\"><span style=\"font-size:11px;text-transform:uppercase;letter-spacing:.10em;font-weight:800;opacity:.78;\">Forma recentă</span><div style=\"display:flex;gap:7px;\">' + chips + '</div></div>' +\n  '</div>' +\n'</div>';\n]]]"
+          },
+          "styles": {
+            "card": [
+              {
+                "padding": "0"
+              },
+              {
+                "border-radius": "30px"
+              },
+              {
+                "overflow": "hidden"
+              },
+              {
+                "background": "linear-gradient(135deg,#3b0764 0%,#6d28d9 48%,#a21caf 100%)"
+              },
+              {
+                "border": "1px solid rgba(255,255,255,.18)"
+              },
+              {
+                "box-shadow": "0 24px 70px rgba(88,28,135,.34)"
+              }
+            ],
+            "grid": [
+              {
+                "grid-template-areas": "\"content\""
+              },
+              {
+                "grid-template-columns": "1fr"
+              }
+            ],
+            "custom_fields": {
+              "content": [
+                {
+                  "width": "100%"
+                }
+              ]
+            }
+          },
+          "grid_options": {
+            "columns": "full",
+            "rows": "auto"
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "column_span": 2,
+      "background": {
+        "color": "#7c3aed",
+        "opacity": 4
+      },
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Meciuri",
+          "heading_style": "title",
+          "icon": "mdi:soccer"
+        },
+        {
+          "type": "custom:button-card",
+          "entity": "sensor.your_team_match",
+          "show_name": false,
+          "show_icon": false,
+          "show_state": false,
+          "custom_fields": {
+            "content": "[[[\nconst a = entity?.attributes ?? {};\nconst opponent = a.opponent ?? 'Adversar';\nconst isHome = a.home_away === 'Home';\nconst matchTeams = String(a.match ?? '').split(' vs ');\nconst fallbackName = String(entity?.attributes?.friendly_name ?? 'FotMob Team').replace(/\\s+Match$/, '');\nconst teamName = a.team_name || (matchTeams.length === 2 ? (isHome ? matchTeams[0] : matchTeams[1]) : fallbackName);\nconst teamLogo = a.entity_picture ?? '';\nconst opponentLogo = a.opponent_logo ?? '';\nconst homeName = isHome ? teamName : opponent;\nconst awayName = isHome ? opponent : teamName;\nconst homeLogo = isHome ? teamLogo : opponentLogo;\nconst awayLogo = isHome ? opponentLogo : teamLogo;\nconst center = a.score || 'VS';\nconst live = a.status === 'Live';\nconst difficultyColor = a.difficulty === 'High' ? '#ef4444' : (a.difficulty === 'Medium' ? '#f59e0b' : '#22c55e');\nconst formColors = {W:'#22c55e',D:'#f59e0b',L:'#ef4444'};\nconst oppForm = (a.opponent_form ?? []).map(v => '<span style=\"display:grid;place-items:center;width:22px;height:22px;border-radius:7px;background:' + (formColors[v] ?? '#64748b') + ';color:#fff;font-size:10px;font-weight:900;\">' + v + '</span>').join('');\nreturn '<div style=\"padding:20px;\">' +\n '<div style=\"display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;\"><div><div style=\"font-size:11px;font-weight:850;letter-spacing:.12em;text-transform:uppercase;color:#8b5cf6;\">Următorul meci</div><div style=\"margin-top:4px;font-size:19px;font-weight:850;\">' + (a.league || 'SuperLiga') + '</div></div><span style=\"padding:7px 10px;border-radius:999px;background:' + (live ? '#ef444422' : '#8b5cf622') + ';color:' + (live ? '#ef4444' : '#8b5cf6') + ';font-size:10px;font-weight:900;letter-spacing:.08em;\">' + (live ? 'LIVE' : 'PROGRAMAT') + '</span></div>' +\n '<div style=\"display:grid;grid-template-columns:minmax(0,1fr) 90px minmax(0,1fr);align-items:center;gap:10px;\">' +\n   '<div style=\"text-align:center;min-width:0;\"><img src=\"' + homeLogo + '\" style=\"width:64px;height:64px;object-fit:contain;\"><div style=\"margin-top:8px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;\">' + homeName + '</div><div style=\"margin-top:3px;font-size:10px;color:var(--secondary-text-color);font-weight:700;\">ACASĂ</div></div>' +\n   '<div style=\"text-align:center;\"><div style=\"font-size:27px;font-weight:950;letter-spacing:-.04em;\">' + center + '</div><div style=\"margin-top:7px;font-size:11px;line-height:1.35;color:var(--secondary-text-color);\">' + (a.timestamp ?? '—') + '</div></div>' +\n   '<div style=\"text-align:center;min-width:0;\"><img src=\"' + awayLogo + '\" style=\"width:64px;height:64px;object-fit:contain;\"><div style=\"margin-top:8px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;\">' + awayName + '</div><div style=\"margin-top:3px;font-size:10px;color:var(--secondary-text-color);font-weight:700;\">DEPLASARE</div></div>' +\n '</div>' +\n '<div style=\"display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;padding-top:15px;border-top:1px solid var(--divider-color);\"><div style=\"display:flex;align-items:center;gap:7px;\">' + oppForm + '</div><div style=\"display:flex;align-items:center;gap:8px;font-size:11px;font-weight:750;\"><span>Loc adversar #' + (a.opponent_rank ?? '—') + '</span><span style=\"width:7px;height:7px;border-radius:50%;background:' + difficultyColor + ';\"></span><span>' + (a.difficulty ?? '—') + '</span></div></div>' +\n'</div>';\n]]]"
+          },
+          "styles": {
+            "card": [
+              {
+                "padding": "0"
+              },
+              {
+                "border-radius": "24px"
+              },
+              {
+                "overflow": "hidden"
+              },
+              {
+                "background": "var(--ha-card-background, var(--card-background-color))"
+              },
+              {
+                "border": "1px solid rgba(148,163,184,.16)"
+              },
+              {
+                "box-shadow": "0 14px 36px rgba(15,23,42,.10)"
+              }
+            ],
+            "grid": [
+              {
+                "grid-template-areas": "\"content\""
+              },
+              {
+                "grid-template-columns": "1fr"
+              },
+              {
+                "grid-template-rows": "auto"
+              }
+            ],
+            "custom_fields": {
+              "content": [
+                {
+                  "width": "100%"
+                },
+                {
+                  "min-width": "0"
+                }
+              ]
+            }
+          },
+          "grid_options": {
+            "columns": 12,
+            "rows": "auto"
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "entity": "sensor.your_team_form",
+          "show_name": false,
+          "show_icon": false,
+          "show_state": false,
+          "custom_fields": {
+            "content": "[[[\nconst games = Array.isArray(entity?.attributes?.form_list) ? entity.attributes.form_list.slice(-5).reverse() : [];\nconst colors = {W:'#22c55e',D:'#f59e0b',L:'#ef4444'};\nconst rows = games.map(game => {\n const home = game?.home ?? {}; const away = game?.away ?? {};\n const isHome = Boolean(home.isOurTeam);\n const opponent = (isHome ? away.name : home.name) ?? 'Necunoscut';\n const result = game?.resultString ?? '?';\n const date = game?.tooltipText?.utcTime ? new Date(game.tooltipText.utcTime).toLocaleDateString('ro-RO',{day:'2-digit',month:'short'}) : '';\n return '<div style=\"display:grid;grid-template-columns:32px 34px minmax(0,1fr) auto;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--divider-color);\">' +\n  '<span style=\"display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:' + (colors[result] ?? '#64748b') + ';color:white;font-size:11px;font-weight:950;\">' + result + '</span>' +\n  '<img src=\"' + (game?.imageUrl ?? '') + '\" style=\"width:28px;height:28px;object-fit:contain;\">' +\n  '<div style=\"min-width:0;text-align:left;\"><div style=\"font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;\">' + opponent + '</div><div style=\"margin-top:2px;color:var(--secondary-text-color);font-size:10px;\">' + (isHome ? 'Acasă' : 'Deplasare') + (date ? ' · ' + date : '') + '</div></div>' +\n  '<div style=\"font-size:15px;font-weight:900;font-variant-numeric:tabular-nums;\">' + (game?.score ?? '—') + '</div></div>';\n}).join('');\nreturn '<div style=\"padding:20px;\"><div style=\"display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;\"><div><div style=\"font-size:11px;font-weight:850;letter-spacing:.12em;text-transform:uppercase;color:#22c55e;\">Rezultate</div><div style=\"margin-top:4px;font-size:19px;font-weight:850;\">Forma recentă</div></div><ha-icon icon=\"mdi:chart-timeline-variant-shimmer\" style=\"color:#22c55e;\"></ha-icon></div>' + (rows || '<div style=\"padding:20px 0;color:var(--secondary-text-color);\">Nu există meciuri recente.</div>') + '</div>';\n]]]"
+          },
+          "styles": {
+            "card": [
+              {
+                "padding": "0"
+              },
+              {
+                "border-radius": "24px"
+              },
+              {
+                "overflow": "hidden"
+              },
+              {
+                "background": "var(--ha-card-background, var(--card-background-color))"
+              },
+              {
+                "border": "1px solid rgba(148,163,184,.16)"
+              },
+              {
+                "box-shadow": "0 14px 36px rgba(15,23,42,.10)"
+              }
+            ],
+            "grid": [
+              {
+                "grid-template-areas": "\"content\""
+              },
+              {
+                "grid-template-columns": "1fr"
+              },
+              {
+                "grid-template-rows": "auto"
+              }
+            ],
+            "custom_fields": {
+              "content": [
+                {
+                  "width": "100%"
+                },
+                {
+                  "min-width": "0"
+                }
+              ]
+            }
+          },
+          "grid_options": {
+            "columns": 12,
+            "rows": "auto"
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "background": {
+        "color": "#f59e0b",
+        "opacity": 4
+      },
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Liderii echipei",
+          "heading_style": "title",
+          "icon": "mdi:crown"
+        },
+        {
+          "type": "custom:button-card",
+          "entity": "sensor.your_team_top_scorer",
+          "name": "Golgheter",
+          "icon": "mdi:soccer",
+          "show_state": false,
+          "tap_action": {
+            "action": "more-info"
+          },
+          "custom_fields": {
+            "content": "[[[\nconst value = String(entity?.state ?? 'N/A');\nconst cut = value.lastIndexOf(' (');\nconst player = cut > 0 ? value.slice(0, cut) : value;\nconst stat = cut > 0 ? value.slice(cut + 2, -1) : '—';\nreturn '<div style=\"display:grid;grid-template-columns:54px minmax(0,1fr);align-items:center;gap:14px;padding:16px 18px;\">' +\n  '<div style=\"width:52px;height:52px;border-radius:17px;display:grid;place-items:center;background:#f59e0b20;color:#f59e0b;\"><ha-icon icon=\"mdi:soccer\" style=\"width:28px;height:28px;\"></ha-icon></div>' +\n  '<div style=\"min-width:0;text-align:left;\"><div style=\"font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--secondary-text-color);font-weight:800;\">Golgheter</div><div style=\"margin-top:5px;font-size:16px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;\">' + player + '</div><div style=\"margin-top:4px;color:#f59e0b;font-size:12px;font-weight:800;\">' + stat + '</div></div>' +\n'</div>';\n]]]"
+          },
+          "show_name": false,
+          "show_icon": false,
+          "styles": {
+            "card": [
+              {
+                "padding": "0"
+              },
+              {
+                "border-radius": "22px"
+              },
+              {
+                "overflow": "hidden"
+              },
+              {
+                "background": "var(--ha-card-background, var(--card-background-color))"
+              },
+              {
+                "border": "1px solid rgba(148,163,184,.16)"
+              },
+              {
+                "box-shadow": "0 14px 36px rgba(15,23,42,.10)"
+              }
+            ],
+            "grid": [
+              {
+                "grid-template-areas": "\"content\""
+              },
+              {
+                "grid-template-columns": "1fr"
+              },
+              {
+                "grid-template-rows": "auto"
+              }
+            ],
+            "custom_fields": {
+              "content": [
+                {
+                  "width": "100%"
+                },
+                {
+                  "min-width": "0"
+                }
+              ]
+            }
+          },
+          "grid_options": {
+            "columns": "full",
+            "rows": "auto"
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "entity": "sensor.your_team_top_assist",
+          "name": "Pase decisive",
+          "icon": "mdi:shoe-cleat",
+          "show_state": false,
+          "tap_action": {
+            "action": "more-info"
+          },
+          "custom_fields": {
+            "content": "[[[\nconst value = String(entity?.state ?? 'N/A');\nconst cut = value.lastIndexOf(' (');\nconst player = cut > 0 ? value.slice(0, cut) : value;\nconst stat = cut > 0 ? value.slice(cut + 2, -1) : '—';\nreturn '<div style=\"display:grid;grid-template-columns:54px minmax(0,1fr);align-items:center;gap:14px;padding:16px 18px;\">' +\n  '<div style=\"width:52px;height:52px;border-radius:17px;display:grid;place-items:center;background:#06b6d420;color:#06b6d4;\"><ha-icon icon=\"mdi:shoe-cleat\" style=\"width:28px;height:28px;\"></ha-icon></div>' +\n  '<div style=\"min-width:0;text-align:left;\"><div style=\"font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--secondary-text-color);font-weight:800;\">Pase decisive</div><div style=\"margin-top:5px;font-size:16px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;\">' + player + '</div><div style=\"margin-top:4px;color:#06b6d4;font-size:12px;font-weight:800;\">' + stat + '</div></div>' +\n'</div>';\n]]]"
+          },
+          "show_name": false,
+          "show_icon": false,
+          "styles": {
+            "card": [
+              {
+                "padding": "0"
+              },
+              {
+                "border-radius": "22px"
+              },
+              {
+                "overflow": "hidden"
+              },
+              {
+                "background": "var(--ha-card-background, var(--card-background-color))"
+              },
+              {
+                "border": "1px solid rgba(148,163,184,.16)"
+              },
+              {
+                "box-shadow": "0 14px 36px rgba(15,23,42,.10)"
+              }
+            ],
+            "grid": [
+              {
+                "grid-template-areas": "\"content\""
+              },
+              {
+                "grid-template-columns": "1fr"
+              },
+              {
+                "grid-template-rows": "auto"
+              }
+            ],
+            "custom_fields": {
+              "content": [
+                {
+                  "width": "100%"
+                },
+                {
+                  "min-width": "0"
+                }
+              ]
+            }
+          },
+          "grid_options": {
+            "columns": "full",
+            "rows": "auto"
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "entity": "sensor.your_team_top_rating",
+          "name": "Cel mai bun rating",
+          "icon": "mdi:star-circle",
+          "show_state": false,
+          "tap_action": {
+            "action": "more-info"
+          },
+          "custom_fields": {
+            "content": "[[[\nconst value = String(entity?.state ?? 'N/A');\nconst cut = value.lastIndexOf(' (');\nconst player = cut > 0 ? value.slice(0, cut) : value;\nconst stat = cut > 0 ? value.slice(cut + 2, -1) : '—';\nreturn '<div style=\"display:grid;grid-template-columns:54px minmax(0,1fr);align-items:center;gap:14px;padding:16px 18px;\">' +\n  '<div style=\"width:52px;height:52px;border-radius:17px;display:grid;place-items:center;background:#8b5cf620;color:#8b5cf6;\"><ha-icon icon=\"mdi:star-circle\" style=\"width:28px;height:28px;\"></ha-icon></div>' +\n  '<div style=\"min-width:0;text-align:left;\"><div style=\"font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--secondary-text-color);font-weight:800;\">Cel mai bun rating</div><div style=\"margin-top:5px;font-size:16px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;\">' + player + '</div><div style=\"margin-top:4px;color:#8b5cf6;font-size:12px;font-weight:800;\">' + stat + '</div></div>' +\n'</div>';\n]]]"
+          },
+          "show_name": false,
+          "show_icon": false,
+          "styles": {
+            "card": [
+              {
+                "padding": "0"
+              },
+              {
+                "border-radius": "22px"
+              },
+              {
+                "overflow": "hidden"
+              },
+              {
+                "background": "var(--ha-card-background, var(--card-background-color))"
+              },
+              {
+                "border": "1px solid rgba(148,163,184,.16)"
+              },
+              {
+                "box-shadow": "0 14px 36px rgba(15,23,42,.10)"
+              }
+            ],
+            "grid": [
+              {
+                "grid-template-areas": "\"content\""
+              },
+              {
+                "grid-template-columns": "1fr"
+              },
+              {
+                "grid-template-rows": "auto"
+              }
+            ],
+            "custom_fields": {
+              "content": [
+                {
+                  "width": "100%"
+                },
+                {
+                  "min-width": "0"
+                }
+              ]
+            }
+          },
+          "grid_options": {
+            "columns": "full",
+            "rows": "auto"
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "column_span": 2,
+      "background": {
+        "color": "#3b82f6",
+        "opacity": 4
+      },
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Clasament",
+          "heading_style": "title",
+          "icon": "mdi:format-list-numbered"
+        },
+        {
+          "type": "custom:button-card",
+          "entity": "sensor.your_team_league_table",
+          "show_name": false,
+          "show_icon": false,
+          "show_state": false,
+          "custom_fields": {
+            "content": "[[[\nconst table = Array.isArray(entity?.attributes?.table) ? entity.attributes.table : [];\nconst teamName = table.find(row => row.is_current)?.team ?? 'Your team';\nconst resultColors = {W:'#22c55e',D:'#f59e0b',L:'#ef4444'};\nconst rows = table.map(row => {\n const form = (row.form ?? []).map(v => '<span style=\"display:inline-block;width:7px;height:7px;border-radius:50%;background:' + (resultColors[v] ?? '#64748b') + ';margin-left:3px;\"></span>').join('');\n return '<div style=\"min-width:650px;display:grid;grid-template-columns:38px minmax(180px,1fr) 40px 40px 40px 58px 48px 82px;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--divider-color);' + (row.is_current ? 'background:rgba(124,58,237,.13);box-shadow:inset 3px 0 #8b5cf6;border-radius:9px;' : '') + '\">' +\n  '<div style=\"font-weight:900;color:' + (row.is_current ? '#8b5cf6' : 'var(--secondary-text-color)') + ';\">' + row.rank + '</div>' +\n  '<div style=\"display:flex;align-items:center;gap:9px;min-width:0;\"><img src=\"https://images.fotmob.com/image_resources/logo/teamlogo/' + row.team_id + '.png\" style=\"width:24px;height:24px;object-fit:contain;\"><span style=\"font-weight:' + (row.is_current ? '900' : '700') + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;\">' + row.team + '</span></div>' +\n  '<div>' + row.played + '</div><div>' + row.wins + '</div><div>' + row.draws + '</div><div>' + row.goals + '</div><div style=\"font-weight:900;\">' + row.pts + '</div><div style=\"white-space:nowrap;\">' + form + '</div></div>';\n}).join('');\nreturn '<div style=\"padding:20px;\"><div style=\"display:flex;align-items:end;justify-content:space-between;gap:14px;margin-bottom:16px;\"><div><div style=\"font-size:11px;font-weight:850;letter-spacing:.12em;text-transform:uppercase;color:#3b82f6;\">Clasament live</div><div style=\"margin-top:4px;font-size:21px;font-weight:900;\">' + (entity?.attributes?.league_name ?? 'Liga I') + '</div></div><div style=\"padding:8px 12px;border-radius:14px;background:#8b5cf618;color:#8b5cf6;font-size:12px;font-weight:900;\">' + teamName + ' #' + entity.state + '</div></div>' +\n '<div style=\"overflow-x:auto;padding-bottom:4px;\"><div style=\"min-width:650px;display:grid;grid-template-columns:38px minmax(180px,1fr) 40px 40px 40px 58px 48px 82px;gap:8px;padding:0 12px 10px;color:var(--secondary-text-color);font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;\"><span>#</span><span>Echipa</span><span>M</span><span>V</span><span>E</span><span>Goluri</span><span>Pct</span><span>Formă</span></div>' + rows + '</div></div>';\n]]]"
+          },
+          "styles": {
+            "card": [
+              {
+                "padding": "0"
+              },
+              {
+                "border-radius": "26px"
+              },
+              {
+                "overflow": "hidden"
+              },
+              {
+                "background": "var(--ha-card-background, var(--card-background-color))"
+              },
+              {
+                "border": "1px solid rgba(148,163,184,.16)"
+              },
+              {
+                "box-shadow": "0 14px 36px rgba(15,23,42,.10)"
+              }
+            ],
+            "grid": [
+              {
+                "grid-template-areas": "\"content\""
+              },
+              {
+                "grid-template-columns": "1fr"
+              },
+              {
+                "grid-template-rows": "auto"
+              }
+            ],
+            "custom_fields": {
+              "content": [
+                {
+                  "width": "100%"
+                },
+                {
+                  "min-width": "0"
+                }
+              ]
+            }
+          },
+          "grid_options": {
+            "columns": "full",
+            "rows": "auto"
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "background": {
+        "color": "#22c55e",
+        "opacity": 3
+      },
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Club",
+          "heading_style": "title",
+          "icon": "mdi:shield-star"
+        },
+        {
+          "type": "custom:button-card",
+          "entity": "sensor.your_team_transfers",
+          "triggers_update": [
+            "sensor.your_team_stadium",
+            "sensor.your_team_coach",
+            "sensor.your_team_history"
+          ],
+          "show_name": false,
+          "show_icon": false,
+          "show_state": false,
+          "custom_fields": {
+            "content": "[[[\nconst stadium = states['sensor.your_team_stadium'];\nconst coach = states['sensor.your_team_coach'];\nconst history = states['sensor.your_team_history'];\nconst arrivals = Array.isArray(entity?.attributes?.players_in) ? entity.attributes.players_in.slice(0,4) : [];\nconst trophies = Array.isArray(history?.attributes?.trophies) ? history.attributes.trophies : [];\nconst arrivalsHtml = arrivals.map(p => '<div style=\"display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--divider-color);\"><div style=\"width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#22c55e18;color:#22c55e;\"><ha-icon icon=\"mdi:arrow-down-bold\" style=\"width:18px;\"></ha-icon></div><div style=\"min-width:0;text-align:left;\"><div style=\"font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;\">' + (p.name ?? 'Necunoscut') + '</div><div style=\"margin-top:2px;font-size:10px;color:var(--secondary-text-color);\">' + (p.fromClub ?? '—') + ' · ' + (p.fee?.feeText ?? '—') + '</div></div></div>').join('');\nconst trophyHtml = trophies.map(t => '<div style=\"padding:11px 12px;border-radius:14px;background:#f59e0b12;\"><div style=\"font-size:11px;color:#f59e0b;font-weight:900;text-transform:uppercase;\">' + t.name + '</div><div style=\"margin-top:4px;font-size:21px;font-weight:950;\">' + t.count + '</div></div>').join('');\nreturn '<div style=\"padding:20px;\">' +\n '<div><div style=\"font-size:11px;font-weight:850;letter-spacing:.12em;text-transform:uppercase;color:#f59e0b;\">Identitate</div><div style=\"margin-top:4px;font-size:20px;font-weight:900;\">Club & transferuri</div></div>' +\n '<div style=\"display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;\">' +\n  '<div style=\"padding:14px;border-radius:17px;background:var(--secondary-background-color);\"><ha-icon icon=\"mdi:stadium\" style=\"color:#22c55e;\"></ha-icon><div style=\"margin-top:10px;font-size:13px;font-weight:850;\">' + (stadium?.state ?? '—') + '</div><div style=\"margin-top:3px;font-size:10px;color:var(--secondary-text-color);\">' + (stadium?.attributes?.city ?? '—') + ' · ' + (stadium?.attributes?.capacity ?? '—') + ' locuri</div></div>' +\n  '<div style=\"padding:14px;border-radius:17px;background:var(--secondary-background-color);\"><ha-icon icon=\"mdi:account-tie\" style=\"color:#8b5cf6;\"></ha-icon><div style=\"margin-top:10px;font-size:13px;font-weight:850;\">' + (coach?.state ?? '—') + '</div><div style=\"margin-top:3px;font-size:10px;color:var(--secondary-text-color);\">Antrenor · ' + (coach?.attributes?.age ?? '—') + ' ani</div></div>' +\n '</div>' +\n '<div style=\"margin-top:20px;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;\">Sosiri recente</div>' + (arrivalsHtml || '<div style=\"padding:14px 0;color:var(--secondary-text-color);\">Nicio sosire.</div>') +\n '<div style=\"margin-top:20px;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;\">Trofee · ' + (history?.state ?? '—') + '</div><div style=\"display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px;\">' + trophyHtml + '</div>' +\n'</div>';\n]]]"
+          },
+          "styles": {
+            "card": [
+              {
+                "padding": "0"
+              },
+              {
+                "border-radius": "24px"
+              },
+              {
+                "overflow": "hidden"
+              },
+              {
+                "background": "var(--ha-card-background, var(--card-background-color))"
+              },
+              {
+                "border": "1px solid rgba(148,163,184,.16)"
+              },
+              {
+                "box-shadow": "0 14px 36px rgba(15,23,42,.10)"
+              }
+            ],
+            "grid": [
+              {
+                "grid-template-areas": "\"content\""
+              },
+              {
+                "grid-template-columns": "1fr"
+              },
+              {
+                "grid-template-rows": "auto"
+              }
+            ],
+            "custom_fields": {
+              "content": [
+                {
+                  "width": "100%"
+                },
+                {
+                  "min-width": "0"
+                }
+              ]
+            }
+          },
+          "grid_options": {
+            "columns": "full",
+            "rows": "auto"
+          }
+        }
+      ]
+    }
+  ]
+}
